@@ -1,0 +1,7 @@
+ The Pdf module is used to write and read PDF (Portable Document Format)
+ documents. On the one hand the PDF writer comes with a set of low level API to
+ create pages, text boxes (using AFM font descriptions), graphic objects, PNG
+ images, annotations, attachments, outlines and digital signatures. On top of
+ this low level tools, the PDF writer has a (user extensible) HTML renderer
+ with automated page layouting. On the second hand the PDF reader allow us
+ to inspect the object structure of a PDF document and verify digital signature.
