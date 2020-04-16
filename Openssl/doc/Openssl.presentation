@@ -1,0 +1,4 @@
+ The module Openssl is a wrapper for the popular openssl library.
+ It provides the infrastructure for handling Public Key Infrastructure
+ (PKI) including key pair generation, X509, digests and digital signature,
+ cyphers and other Public Key Cryptographic Standars (PKCS).
