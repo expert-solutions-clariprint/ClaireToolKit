@@ -1,0 +1,3 @@
+ The Zlib module is a wrapper for the popular zlib library. It provides
+ two filters that handles compression and decompression for the deflate
+ and gzip formats.
