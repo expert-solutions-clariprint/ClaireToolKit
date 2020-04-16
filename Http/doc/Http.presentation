@@ -1,0 +1,6 @@
+ The module Http defines the a low level handler for HTTP protocol in a
+ CGI environment. It defines various filters for handling encoding in such
+ environment (chunked encoding, gzip response, content length spying, boundrary reading).
+ The Http module also defines the $, $key and $value table that are filled
+ with form datas, it manages application/x-www-form-urlencoded and
+ multipart/form-data protocols.
