@@ -1,0 +1,6 @@
+ The Db module is a general purpose module dedicated to databases
+ connection. It provides the API to submit SQL query to a database
+ and loading datas from a database. It also provide transaction
+ support. In order to actualy connect a database, a driver module
+ that implement the Db interface should be used (For instance the
+ Mysql driver module).
