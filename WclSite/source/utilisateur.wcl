@@ -1,0 +1,54 @@
+<? 	// ------------ eXpert soLutions - tout droits reserves 2002 
+	// file generated :   
+(includeTop())
+
+(if $["id"]
+	Wcl/register("UTILISATEUR",Dbo/dbLoad(USER_DATABASE,WclSite/WebUser,$["id"])))
+
+(if $["creation"]
+	Dbo/dbCreate(USER_DATABASE,Wcl/register("UTILISATEUR",WclSite/WebUser())))
+
+(if $["modification"] (
+	if $["usrFullName"] 	$["UTILISATEUR"].WclSite/usrFullName 	:= $["usrFullName"],
+	if $["usrLogin"] 		$["UTILISATEUR"].WclSite/usrLogin 		:= $["usrLogin"],
+	if $["usrMail"] 		$["UTILISATEUR"].WclSite/usrMail 		:= $["usrMail"],
+	if $["usrPassword"] 	$["UTILISATEUR"].WclSite/usrPassword 	:= $["usrPassword"],
+					 		$["UTILISATEUR"].WclSite/usrLocked 		:= ($["usrLocked"] = "1"),
+	if $["usrLockedInfo"] 	$["UTILISATEUR"].WclSite/usrLockedInfo	:= $["usrLockedInfo"],
+							$["UTILISATEUR"].WclSite/usrSuperUser?	:= ($["usrSuperUser?"] = "1"),
+	if $["usrGroup"] 		$["UTILISATEUR"].WclSite/usrGroup		:= Dbo/dbLoad(USER_DATABASE,WclSite/WebUserGroup ,$["usrGroup"]),
+	if $["usrLanguage"] 	$["UTILISATEUR"].WclSite/usrLanguage	:= Dbo/dbLoad(USER_DATABASE,WclSite/WebLangue ,$["usrLanguage"]),
+	Dbo/dbUpdate(USER_DATABASE,$["UTILISATEUR"])))
+
+(WclSite/showMenu(WclSite/MENU_ADMINISTRATION_UTILISATEUR))
+
+
+?>
+<form>
+<table>
+<tr><td align=right><?== translate("nom complet") ?> :
+	<td><input type=text size=50 name="usrFullName" value="<?= $["UTILISATEUR"].WclSite/usrFullName ?>">
+<tr><td align=right><?== translate("email") ?> :
+	<td><input type=text size=50 name="usrMail" value="<?= $["UTILISATEUR"].WclSite/usrMail ?>">
+<tr><td align=right><?== translate("code") ?> :
+	<td><input type=text size=50 name="usrLogin" value="<?= $["UTILISATEUR"].WclSite/usrLogin ?>">
+<tr><td align=right><?== translate("mot de passe") ?> :
+	<td><input type=password size=50 name="usrPassword" value="<?= $["UTILISATEUR"].WclSite/usrPassword ?>">
+<tr><td align=right><?== translate("bloqué") ?> :
+	<td><input type=checkbox name="usrLocked" value="1" <? (if $["UTILISATEUR"].WclSite/usrLocked echo("checked")) ?>>
+<tr><td align=right><?== translate("raison bloquage") ?> :
+	<td><input type=text size=50 name="usrLockedInfo" value="<?= $["UTILISATEUR"].WclSite/usrLockedInfo ?>">
+
+<tr><td align=right><?== translate("super utilisateur") ?> :
+	<td><input type=checkbox name="usrSuperUser?" value="1" <? (if $["UTILISATEUR"].WclSite/usrSuperUser? echo("checked")) ?>>
+
+<tr><td align=right><?== translate("groupe") ?> :
+	<td><? (htmlSelect("usrGroup",Dbo/dbLoad(USER_DATABASE,WclSite/WebUserGroup),Dbo/dbGet(USER_DATABASE,WclSite/usrGroup,$["UTILISATEUR"]))) ?>
+<tr><td align=right><?== translate("langue") ?> :
+	<td><? (htmlSelect("usrLanguage",Dbo/dbLoad(USER_DATABASE,WclSite/WebLangue),Dbo/dbGet(USER_DATABASE,WclSite/usrLanguage,$["UTILISATEUR"]))) ?>
+<tr><td>
+	<td><input type=submit value="<?== translate("modification") ?>" name="modification">
+</table>
+</form>
+
+<? (includeBottom()) ?>

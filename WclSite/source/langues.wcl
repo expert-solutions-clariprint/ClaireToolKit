@@ -1,0 +1,82 @@
+<? 	// ------------ eXpert soLutions - tout droits reserves 2002 
+	// file generated :   
+
+(includeTop(),
+WclSite/showMenu(WclSite/MENU_ADMINISTRATION_LANGUES))
+
+
+//-------------- import ----------------
+
+(if $["reset_locale_from_db"]
+	(LibLocale/reset_locale(),
+	WclSite/instantiate_locale_from_db(),
+	LibLocale/generate_serialized_locale_files()))
+
+
+(if $["reset_locale_from_xml"]
+	LibLocale/reset_locale_with_xml_file())
+
+
+(case $["reset_locale_from_imported_xml"]
+	(Wcl/upload
+		LibLocale/reset_locale_with_xml_file(f.file_path)))
+
+//-------------- export ----------------
+
+
+(if $["export_locale_from_db"]
+	(LibLocale/reset_locale(),
+	WclSite/instantiate_locale_from_db(),
+	Wcl/force_content_length(),
+	header("Content-Type: application/xml"),
+	header("Content-Disposition: inline; filename=clariprint_locale.xml"),
+	LibLocale/print_xml(),
+	die()))
+
+(if $["export_locale_from_xml"]
+	(LibLocale/reset_locale(),
+	LibLocale/load_xml(),
+	Wcl/force_content_length(),
+	header("Content-Type: application/xml"),
+	header("Content-Disposition: inline; filename=clariprint_locale.xml"),
+	LibLocale/print_xml(),
+	die()))
+
+
+?><table border=0>
+	<tr>
+		<th>
+			<?== translate("(Re)générer toutes les traductions") ?>
+		<td>
+			<form method=get action="langues.wcl">		
+				<input type=submit name=reset_locale_from_db
+						value="<?== translate("A partir de la base de donnée") ?>">
+			</from>
+			<form method=get action="langues.wcl">
+				<input type=submit name=reset_locale_from_xml
+					value="<?== translate("A partir du fichier XML") ?>">
+			</from>
+			<form method=post action="langues.wcl" enctype="multipart/form-data">
+				<table border=0>
+				<tr>
+					<td><input type="file" name="locale_file">
+					<td><input type="submit" name="import_catalogue"
+							value="<?== translate("A partir d'un fichier XML importé") ?>">
+				</table>
+			</from>	
+	<tr>
+		<th>
+			<?== translate("Exporter le fichier de traduction") ?>
+		<td>
+		<td>
+			<form method=get action="langues.wcl">		
+				<input type=submit name=export_locale_from_db>
+					value="<?== translate("A partir de la base de donnée") ?>">
+			</from>
+			<form method=get action="langues.wcl">
+				<input type=submit name=export_locale_from_xml
+					value="<?== translate("A partir du fichier XML") ?>">
+			</from>
+</table>
+
+<? includeBottom()) ?>

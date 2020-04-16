@@ -1,0 +1,50 @@
+<? 	// ------------ eXpert soLutions - tout droits reserves 2002 
+	// file generated :   
+(WclSite/includeTop())
+
+(if $["creation"] Dbo/dbCreate(LANG_DATABASE,Wcl/register("LANGUE",WclSite/WebLangue())))
+
+(if $["id"] Wcl/register("LANGUE",Dbo/dbLoad(LANG_DATABASE,WclSite/WebLangue,$["id"])))
+
+(if $["modification"] (
+	 if $["langName"] $["LANGUE"].WclSite/langName := $["langName"],
+	 Dbo/dbUpdate(LANG_DATABASE, $["LANGUE"]))
+)
+
+
+(if $["modification_traduction"] (
+	 for i in Dbo/dbLoad(LANG_DATABASE,Traduction,list(tuple(trLangue,$["LANGUE"]))) (
+	 	if $value["trad",string!(Dbo/getDbId(i))] (
+	 		i.trTraduction := $value["trad",string!(Dbo/getDbId(i))],
+	 		Dbo/dbUpdate(LANG_DATABASE,i))))
+)
+
+(showMenu(MENU_ADMINISTRATION_LANGUE))
+?>
+<form>
+<table>
+<tr><td align=right><?== translate("identifiant") ?> :</td>
+	<td><input type=text size=10 name="langName" value="<?= $["LANGUE"].langName ?>"></td>
+<tr><td>
+	<td><input type=submit value="<?== translate("modification") ?>" name="modification">
+</table>
+</form>
+
+<form method=post>
+<table width="100%">
+<tr><th width="50%">reference</th>
+	<th width="50%">traduction</th>
+</tr>
+<?
+( for i in Dbo/dbLoad(LANG_DATABASE,Traduction, trReference, true,list(tuple(trLangue,$["LANGUE"]))) ( ?>
+
+<tr><td><?= i.trReference ?></td>
+	<td><input type=text size=80 name="trad[<?== Dbo/getDbId(i) ?>]" value="<?= i.trTraduction ?>"></td>
+</tr>
+<? )) ?>
+<tr><td>
+	<td><input type=submit value="<?== translate("modification") ?>" name="modification_traduction">
+</table>
+</form>
+
+<? (WclSite/includeBottom()) ?>

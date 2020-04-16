@@ -1,0 +1,28 @@
+<? 	// ------------ eXpert soLutions - tout droits reserves 2002 
+	// file generated :   
+(includeTop())
+(showMenu(MENU_ADMINISTRATION_UTILISATEURS))
+
+(if $["suppression"] (
+	let obj := Dbo/dbLoad(USER_DATABASE,WclSite/WebUser,$["suppression"])
+	in ( ?>
+	<p class=alerte>
+	<form><input type=hidden name="suppression_ok" value="<?== $["suppression"] ?>">
+		<?== translate("Opération irreversible") ?> :	<input type=submit value="<?== (translate("Comfirmer suppression de") /+ " " /+ getInfo(obj)) ?>">
+	</form>
+	</p>
+	<?
+)))
+(if $["suppression_ok"] (
+	let obj := Dbo/dbLoad(USER_DATABASE,WclSite/WebUser,$["suppression_ok"])
+	in Dbo/dbDelete(USER_DATABASE,obj)
+))
+
+(htmlTable("Utilisateur(s)",
+			Dbo/dbLoad(USER_DATABASE,WclSite/WebUser,WclSite/usrFullName,true),
+			WclSite/WebUser,
+			WclSite/MENU_ADMINISTRATION_UTILISATEUR,
+			WclSite/MENU_ADMINISTRATION_UTILISATEUR,
+			WclSite/MENU_ADMINISTRATION_UTILISATEURS)) 
+
+(includeBottom()) ?>

@@ -1,0 +1,32 @@
+<? 	// ------------ eXpert soLutions - tout droits reserves 2002 
+	// file generated :   
+(WclSite/includeTop(),
+WclSite/showMenu(WclSite/MENU_ADMINISTRATION_GROUPES))
+
+(if $["suppression"] (
+	let obj := Dbo/dbLoad(USER_DATABASE,WclSite/WebUserGroup,$["suppression"])
+	in ( ?>
+	<p class=alerte>
+	<form><input type=hidden name="suppression_ok" value="<?== $["suppression"] ?>">
+		<?== translate("Opération irreversible entrainant la supression des utilisateurs de ce groupe") ?> :	<input type=submit value="<?== (translate("Comfirmer suppression de") /+ " " /+ getInfo(obj)) ?>">
+	</form>
+	</p>
+	<?
+)))
+
+
+(if $["suppression_ok"] (
+	when obj := Dbo/dbLoad(USER_DATABASE,WclSite/WebUserGroup,$["suppression_ok"])
+	in (for usr in Dbo/dbLoad(USER_DATABASE,WclSite/WebUser,list(tuple(WclSite/usrGroup,obj)))
+			Dbo/dbDelete(USER_DATABASE,usr),Dbo/dbDelete(USER_DATABASE,obj))
+))
+
+(WclSite/htmlTable(	"Groupe(s)",
+			Dbo/dbLoad(WclSite/USER_DATABASE,WclSite/WebUserGroup),
+			WclSite/WebUserGroup,
+			WclSite/MENU_ADMINISTRATION_GROUPE_INFORMATIONS,
+			WclSite/MENU_ADMINISTRATION_GROUPE_INFORMATIONS,
+			WclSite/MENU_ADMINISTRATION_GROUPES))
+
+
+(WclSite/includeBottom()) ?>

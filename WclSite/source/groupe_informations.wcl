@@ -1,0 +1,30 @@
+<? 	// ------------ eXpert soLutions - tout droits reserves 2002 
+	// file generated :   
+(WclSite/includeTop())
+ 
+(if $["creation"] (
+	Dbo/dbCreate(WclSite/USER_DATABASE,
+				Wcl/register("GROUPE",WclSite/WebUserGroup())))
+)
+
+(if $["id"]
+	Wcl/register("GROUPE",Dbo/dbLoad(WclSite/USER_DATABASE,WclSite/WebUserGroup,$["id"]))
+)
+
+(if $["modification"] (
+	if $["groupTitle"] $["GROUPE"].WclSite/groupTitle := $["groupTitle"],
+	Dbo/dbUpdate(WclSite/USER_DATABASE,$["GROUPE"]))
+)
+(WclSite/showMenu(WclSite/MENU_ADMINISTRATION_GROUPE_INFORMATIONS))
+//(see($["GROUPE"]))
+ ?>
+
+<form>
+<table>
+<tr><td align="right"><?= translate("nom")  ?> :
+	<td><input type=text value="<?= $["GROUPE"].WclSite/groupTitle ?>" name="groupTitle">
+<tr><td>
+	<td><input type=submit name="modification" value="<?== translate("enregistrer") ?>">
+</table>
+
+<? (WclSite/includeBottom()) ?>

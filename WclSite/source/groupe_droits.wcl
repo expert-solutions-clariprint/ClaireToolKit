@@ -1,0 +1,67 @@
+<? 	// ------------ eXpert soLutions - tout droits reserves 2002 
+	// file generated :   
+(WclSite/includeTop())
+(WclSite/showMenu(WclSite/MENU_ADMINISTRATION_GROUPE_DROITS))
+
+(if $["modification"] (
+	for i in Dbo/dbLoad(USER_DATABASE,WclSite/MenuGroupPermission,list(tuple(WclSite/permGroup,$["GROUPE"])))
+		Dbo/dbDelete(USER_DATABASE,i),
+
+	for m in WclSite/WebMenu (
+		let perm := WclSite/MenuGroupPermission(WclSite/permGroup = $["GROUPE"], WclSite/permMenu = string!(name(m))) in (
+			perm.WclSite/permRead := ($value["CanRead",string!(name(m))] = "1")		,
+			perm.WclSite/permModify := ($value["CanModify",string!(name(m))] = "1")	,
+			perm.WclSite/permCreate := ($value["CanCreate",string!(name(m))] = "1")		,
+			perm.WclSite/permDelete := ($value["CanDelete",string!(name(m))] = "1")	,
+			Dbo/dbCreate(USER_DATABASE,perm))))
+)
+
+[menuTree(self:WclSite/WebMenu, last?:boolean) : void ->
+( ?>
+<table CellPadding=0 CellSpacing=0 border=0 width='100%'>
+		<tr>
+			<td><table BORDER=0 width=100%>
+					<tr><? (let (canRead,canModify,canCreate,canDelete) := WclSite/groupPermissions($["GROUPE"],self) in ( ?>
+						<td  bgcolor='#F0F0F0' width=100% ><?== string!(name(self)) ?>
+						<td  bgcolor='#F0F0F0'>R<input value=1 name="CanRead[<?== string!(name(self)) ?>]" type=checkbox <? (if canRead echo("checked")) ?> >
+						<td  bgcolor='#F0F0F0'>W<input value=1 name="CanModify[<?== string!(name(self)) ?>]" type=checkbox <? (if canModify echo("checked")) ?> >
+						<td  bgcolor='#F0F0F0'>C<input value=1 name="CanCreate[<?== string!(name(self)) ?>]" type=checkbox <? (if canCreate echo("checked")) ?> >
+						<td  bgcolor='#F0F0F0'>D<input value=1 name="CanDelete[<?== string!(name(self)) ?>]" type=checkbox <? (if canDelete echo("checked")) ?> >
+						<? )) ?>
+					</tr>
+				</table>
+			</td>
+			<td width=20 valign=top <?= 
+			(if (self.WclSite/menuGlobal) ">" else
+				(if last? "><img src='/img/barre_end.png'>" else "background='/img/barre.png'>")) ?></td>
+					
+		</tr>
+ 		<tr><td  width=20 valign=top <?=
+						(if last? "" /* barre_droit.png" */ else "background='/img/barre.png'") ?>></td>
+			<td></td>
+		</tr>
+		<?
+		((for c in self.WclSite/menuChilds 
+			( ?><tr><td width=20 valign=top <?= (if last? "" else "background='../img/barre_droit.png'") ?>></td>
+					<td><? menuTree(c, last(self.WclSite/menuChilds ) = c) ?></td><? ))) ?></table><? )]
+?>
+
+<button onclick="javascript:checkAll(true)">check all</button>
+<button onclick="javascript:checkAll(false)">uncheck all</button>
+<form name="droits" id="droits" method=post>
+<? (for i in WclSite/CURRENT_WEB_SITE.WclSite/siteGlobalsMenu menuTree(i,true)) ?>
+
+<input type="submit" name="modification" value="<?== translate("enregistrer") ?>">
+</form>
+
+<script language=javascript>
+function checkAll(val)
+{
+	for(i=0; i <  document.forms.droits.elements.length  ;i++)
+	{
+		document.forms.droits.elements[i].checked = val;
+	}
+}
+</script>
+
+<? (WclSite/includeBottom()) ?>
