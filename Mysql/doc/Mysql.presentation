@@ -1,0 +1,2 @@
+ The Mysql module is a driver module for the Db interface. It relies the
+ popular mysqlclient library.
