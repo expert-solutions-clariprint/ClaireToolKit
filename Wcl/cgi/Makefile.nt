@@ -1,0 +1,6 @@
+
+LINK32_FLAGS=kernel32.lib /nologo /subsystem:windows /dll /incremental:no /machine:I386 /out:mod_wcl.so /implib:"mod_wcl.lib"
+
+all:
+	cl /nologo /MD /W3 /GX /Od /D "CLPC" /D "WIN32" /D "_WINDOWS" /FD /c mod_wcl.c
+	link $(LINK32_FLAGS) mod_wcl.obj libapr.lib libaprutil.lib libhttpd.lib ws2_32.lib

@@ -1,0 +1,6 @@
+ The Wcl module defines an HTTP derived handler suitable for serving
+ dynamic content over the web in the CLAIRE language. Wcl handles
+ tracing support in CGI environment, manages client sessions
+ and provides an on-page reporting for errors issued by scripts.
+ It also handles the interface the mod_wcl Apache 2.x module and
+ describes how to configure the Apache web server.
