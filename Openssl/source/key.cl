@@ -58,12 +58,14 @@ DSA <: freeable_object(dsa*:DSA*)
 		openssl_error!(),
 	self]
 
-[dsa_generate_parameters(nbits:(1 .. 1024)) : DSA* ->
-	externC("DSA_generate_parameters(nbits,NULL,0,NULL,NULL,NULL,NULL)",DSA*)]
+[dsa_generate_parameters_ex(dsa:DSA, nbits:(1 .. 1024)) : integer ->
+	externC("DSA_generate_parameters_ex(dsa->dsa_star, nbits,NULL,0,NULL,NULL,NULL)",integer)]
 
 [dsa_generate_key(nbits:(1 .. 1024)) : DSA ->
-	DSA!(dsa_generate_key(dsa_generate_parameters(nbits)))]
-
+	let x := externC("DSA_new()",DSA*),
+		dsa := DSA!(x)
+	in (dsa_generate_parameters_ex(dsa,nbits),
+		dsa)]
 
 [dsa_size(self:DSA) : integer -> externC("DSA_size(self->dsa_star)",integer)]
 
@@ -81,10 +83,14 @@ RSA <: freeable_object(rsa*:RSA*)
 
 [RSA!(self:RSA*) : RSA => RSA(rsa* = self)]
 
-
-
-[rsa_generate_key(nbits:integer) : RSA ->
-	RSA!(externC("RSA_generate_key(nbits,RSA_F4,NULL,NULL)", RSA*))]
+[rsa_generate_key_ex(nbits:integer) : RSA ->
+	let x := externC("RSA_new()", RSA*)
+	in (externC("
+		BIGNUM *bn = BN_new();
+		BN_set_word(bn, RSA_F4);
+		RSA_generate_key_ex(x,nbits,bn,NULL);
+		BN_free(bn);"),
+		RSA!(x))]
 
 
 [rsa_size(self:RSA) : integer -> externC("RSA_size(self->rsa_star)",integer)]
@@ -122,7 +128,7 @@ key <: freeable_object(evp_key:EVP_PKEY*, src_rsa:RSA, src_dsa:DSA)
 // @doc Key pair
 // rsa!(nbits) generates an RSA key pair (private and public keys) of the given size
 // nbits. nbits should be a 2 exponent.
-[rsa!(nbits:integer) : key -> key!(rsa_generate_key(nbits))]
+[rsa!(nbits:integer) : key -> key!(rsa_generate_key_ex(nbits))]
 
 // @doc Key pair
 // rsa!(nbits) generates an DSA key pair (private and public keys) of the given size
@@ -566,7 +572,7 @@ EVP_CIPHER_CTX* <: import()
 crypt_context <: freeable_object(context:EVP_CIPHER_CTX*)
 
 free!(self:crypt_context) : void ->
-	externC("delete self->context")
+	externC("EVP_CIPHER_CTX_free(self->context)")
 
 [crypt_context!() : crypt_context ->
 	let c := externC("EVP_CIPHER_CTX_new()", EVP_CIPHER_CTX*)
