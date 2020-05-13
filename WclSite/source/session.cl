@@ -60,13 +60,20 @@ private/SESSION_TIME_OUT:integer := 36000   // time_out d'une session en seconde
 // *   Part 2: Session Management                                      *
 // *********************************************************************
 
+[get_client_ip() : string
+->	if (isenv?("HTTP_X_FORWARDED_FOR") & getenv("HTTP_X_FORWARDED_FOR") != "")
+		let x := explode(getenv("HTTP_X_FORWARDED_FOR"),",")
+		in (if (length(x) > 0) trim(x[1])
+			else getenv("REMOTE_ADDR"))
+	else getenv("REMOTE_ADDR")]
+
 
 [open_session(self:WebUser) : void
 ->	//[-100] open_session(~S) [~S] // self,getenv("WCL_SESSION"),
 	let sess := user_session()
 	in (sess.sess_id := getenv("WCL_SESSION"),
 		sess.sess_user := self,
-		sess.sess_ip := getenv("REMOTE_ADDR"),
+		sess.sess_ip := get_client_ip(),
 		sess.sess_url := getenv("PATH_INFO"),
 		sess.sess_locale := (if known?(usrLocale,self) self.usrLocale else "FR"),
 		sess.sess_active? := true,
@@ -96,7 +103,7 @@ private/SESSION_TIME_OUT:integer := 36000   // time_out d'une session en seconde
 	when l := Dbo/dbLoad(USER_DATABASE,
 							user_session,
 							list(tuple(sess_id,session_id),
-								tuple(sess_ip,getenv("REMOTE_ADDR")),
+								tuple(sess_ip,get_client_ip()),
 								tuple(sess_active?,true)))
 		in (if l
 				(let sess := l[1] as user_session in (
@@ -196,7 +203,7 @@ AND <?= Dbo/dbName(sess_id) ?> !=  <? (Dbo/dbPrintValue(USER_DATABASE,but_sessio
 [private/session_close(session_id:string) : void
 ->	//[-100] session_close(),
 	Dbo/dbUpdate(USER_DATABASE,user_session,list(tuple(sess_active?,false),tuple(sess_closed,now())), list(tuple(sess_id,session_id),
-							tuple(sess_ip,getenv("REMOTE_ADDR"))))]
+							tuple(sess_ip,get_client_ip())))]
 [private/session_close() : void
 -> session_close(getenv("WCL_SESSION"))]
 
@@ -215,7 +222,7 @@ AND <?= Dbo/dbName(sess_id) ?> !=  <? (Dbo/dbPrintValue(USER_DATABASE,but_sessio
 // *   Part 4: User management                                          *
 // *********************************************************************
 
-
+		/*
 [mysqlPasswordUpdate(login:string,pass:string) : void
 ->	Db/printInQuery(USER_DATABASE),
 	printf("UPDATE ~A SET ~A = MD5(~I) WHERE ~A = ~I AND ~A = OLD_PASSWORD(~I) LIMIT 1",
@@ -228,12 +235,10 @@ AND <?= Dbo/dbName(sess_id) ?> !=  <? (Dbo/dbPrintValue(USER_DATABASE,but_sessio
 		Dbo/dbPrint(USER_DATABASE, pass)),
 	Dbo/endOfQuery(USER_DATABASE)]
 
-
+*/
 [getSecureWebUser(login:string,passwd:string) :  (WebUser U {unknown}) 
 ->	//[-100] getSecureWebUser(),
-	if isenv?("OLD_PASSWORD")
-		(Db/SQL_TYPES[Db/SQL_PASSWORD,Db/MYSQL]	:=	"OLD_PASSWORD")
-	else mysqlPasswordUpdate(login,passwd),
+
 	if unknown?(USER_DATABASE) (WebUserUnknownDatabase(), unknown)
 	else (when u := some(x in Dbo/dbLoad(USER_DATABASE,WebUser,list(usrLogin,usrFullName,usrLocale,usrDefaultApp,usrSuperUser?,usrMultipleLogin,usrTimeZone), list(tuple(usrLogin,login),tuple(usrLocked,false))) | true) 
 		in (if Dbo/dbValidPassword?(USER_DATABASE,u,passwd) u as WebUser
