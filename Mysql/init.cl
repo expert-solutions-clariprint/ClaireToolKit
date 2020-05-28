@@ -6,7 +6,7 @@
 	compiler.libraries :add "c:\\mysql\\lib\\opt\\libmySQL.lib  c:\\mysql\\lib\\opt\\zlib.lib"
 else if (find(compiler.env,"Darwin") > 0)
 	compiler.libraries :add " -L/opt/local/lib/mysql56/mysql -I/opt/local/include/mysql56 -lmysqlclient -lz"
-else compiler.libraries :add "-L/usr/lib/mysql -L/usr/local/mysql/lib/ -lmysqlclient -lz")
+else compiler.libraries :add "-L/usr/lib/mysql -L/usr/local/mysql/lib/ -lmariadbclient -lpthread -lz -lm -ldl")
 
 (use_module("Db/v1.0.0"))
 
@@ -14,7 +14,7 @@ Mysql :: module(
 	version = "v1.0.0",
 	part_of = Db,
 	uses = list(Db),
-	made_of = list("model", (if (sys_name() = "Darwin") "<mysql/mysql.h>" else "<mariadb/mysql.h>")),
+	made_of = list("model", (if (sys_name() = "Darwin") "<mysql/mysql.h>" else "<mysql/mysql.h>")),
 	source = "source")
 
 (begin(Db))

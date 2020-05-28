@@ -176,3 +176,15 @@ WebStartupItem <: object(itemInfo:string = "startup", level:integer = 0)
 	for i in sort(sort_startup_item @ WebStartupItem,list{ i | i in WebStartupItem} )
 		web_shutdown(i)]
 
+
+
+
+
+[claire/strftime(t:float,f:string) : string 
+=>  strftime(f,t)]
+
+[claire/date(t:float,f:string) : string 
+=>  strftime(f,t)]
+
+[claire/fserialize(self:any, p:port) : void
+=> serialize(p,self)]
