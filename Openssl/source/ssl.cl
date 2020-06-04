@@ -22,7 +22,7 @@ ssl_socket <: socket(ssl*:SSL*, ssl_ctx*:SSL_CTX*)
 INIT_SSL:boolean := false
 
 init_ssl_lib() : void ->
-	(if not(INIT_SSL) externC("SSL_library_init();"),
+	(if not(INIT_SSL) externC("SSL_load_error_strings(); SSL_library_init();"),
 	INIT_SSL := true)
 
 
@@ -49,7 +49,7 @@ claire/sclient!(addr:string, p:integer) : ssl_socket ->
 				Core/fd = Core/connect(addr, p),
 				Core/tcpport = p)
 	in (init_ssl_lib(),
-		externC("const SSL_METHOD *meth=DTLS_method()"),
+		externC("const SSL_METHOD *meth=TLS_method()"),
 		if externC("(meth==NULL ? CTRUE : CFALSE)",boolean)
 			error("Couldn't create SSL method for ~A:~S", addr, p),
 		externC("s->ssl_ctx_star = SSL_CTX_new(meth)"),
