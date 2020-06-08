@@ -174,7 +174,7 @@ claire/upload <: ephemeral_object(
 			handle_multipart_form_data(self, ct))
 		else if (match_wildcard?(ct, "*application/x-www-form-urlencoded*") | query_string?)
 			(//[-100] == Handle form data with content-type application/x-www-form-urlencoded,
-			handle_x_www_form_urlencoded(self,port!(getenv("QUERY_STRING")))))]
+			handle_x_www_form_urlencoded(self)))]
 
 
 // *********************************************************************
@@ -190,7 +190,7 @@ claire/upload <: ephemeral_object(
 					add_form_var(url_decode(l[1]), url_decode(l[2])))]
 
 [handle_x_www_form_urlencoded(self:http_handler, p:port) : void ->
-	//[-100] === Handle x-www-form-urlencoded on ~S // self.input,
+	//[-100] === Handle x-www-form-urlencoded on ~S // p,
 	while not(eof?(p))
 		let buf := freadline(p, "&"),
 			l := explode(buf, "=") in
