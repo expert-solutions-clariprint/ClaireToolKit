@@ -305,7 +305,7 @@ ensure_http_headers_sent(self:http_handler) : void ->
 // Note: the input is parsed such to read a www-form url encoded
 [initialize_from_cgi_env(self:http_handler) : void ->
 	//<sb> check the length of the input POST message
-	if isenv?("CONTENT_LENGTH")
+	if (integer!(getenv("CONTENT_LENGTH")) > 0)
 		(if (isenv?("WCL_MAX_POST") &
 				integer!(getenv("CONTENT_LENGTH")) >
 					integer!(float!(getenv("WCL_MAX_POST")) * 1048576.0))
