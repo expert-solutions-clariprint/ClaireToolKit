@@ -1,4 +1,6 @@
-
+Linux*
+Darwin*
+*.serialized
 .DS_Store
 Casper/csrc/Casper.cpp
 Casper/include/Casper.h
