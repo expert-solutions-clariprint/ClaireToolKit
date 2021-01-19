@@ -275,8 +275,9 @@ node <: ephemeral_object(
 	attributes:table,
 	childs:list[node])
 
-[nsurl!(ctx:context,self:module) : string -> nsurl!(ctx,self.part_of) / string!(self.name)]
-[nsurl!(ctx:context,self:{claire}) : string -> "http://www.claire-language.com"]
+// [nsurl!(ctx:context,self:module) : string -> nsurl!(ctx,self.part_of) / string!(self.name)]
+[nsurl!(ctx:context,self:module) : string -> string!(self.name)]
+// [nsurl!(ctx:context,self:{claire}) : string -> "http://www.claire-language.com"]
 [nsurl2module(ctx:context,url:string) : module -> let aname := last(explode(url,"/")) in get_value(aname) as module]
 
 
