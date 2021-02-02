@@ -105,9 +105,10 @@ dbPrint :: property()
 [dbPrintDate(db:Database,p:dbProperty,self:float) : void
 ->	if (p.dbSqlType = SQL_DATE)
 		princ(strftime(SQL_TYPES[p.dbSqlType + 1, db.driverType], self as float))
-	else let old := tzset("UTC")
+	else let old := none // tzset("UTC")
 		in (princ(strftime(SQL_TYPES[p.dbSqlType + 1, db.driverType], self as float)),
-			tzset(old))]
+			none // tzset(old)
+			)]
 (abstract(dbPrintDate))
 
 // The API to use, take care of the password? status of dbProperty

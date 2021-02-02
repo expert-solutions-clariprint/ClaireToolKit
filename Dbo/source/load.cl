@@ -86,7 +86,8 @@ value! :: property()
 					(//[DBOJECTS] update property ~S with ~S // prop, val,
 					if (val % port) value!(db, prop, self, val)
 					else if (known?(dbSqlType,prop) & prop.dbSqlType % SQL_DATE_TYPE)
-						(if (prop.dbSqlType = SQL_DATE) make_date(val) else make_utc_date(val))
+//						(if (prop.dbSqlType = SQL_DATE) make_date(val) else make_utc_date(val))
+						make_date(val)
 					else if (range(@(prop, selfOwner)) <= list[string]) explode(val,string!(STRING_BAG_SEP))
 					else if (range(@(prop, selfOwner)) <= set[string]) set!(explode(val,string!(STRING_BAG_SEP)))
 					else if (range(@(prop, selfOwner)) <= list[integer]) list{integer!(x) | x in explode(val,";")}
