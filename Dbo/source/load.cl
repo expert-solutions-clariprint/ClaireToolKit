@@ -94,7 +94,12 @@ value! :: property()
 					else if (range(@(prop, selfOwner)) <= set[integer]) {integer!(x) | x in explode(val,";")}
 					else if (range(@(prop, selfOwner)) <= list[float]) list{float!(x) | x in explode(val,";")}
 					else if (range(@(prop, selfOwner)) <= set[float]) {float!(x) | x in explode(val,";")}
-					else value!(db, val, range(@(prop, selfOwner))))
+					else (try value!(db, val, range(@(prop, selfOwner)))
+							catch any (	//[-10] ************ catch exception in updateValuesFromRow *****************,
+										//[-10] ~S // exception!(),
+										//[-10] *****************************,
+										none
+								)))
 				in write(prop, self, clval) else erase(prop, self))
 			else erase(prop, self)), // mapping NULL -> unknown
 		when id := get(idProp, self)
