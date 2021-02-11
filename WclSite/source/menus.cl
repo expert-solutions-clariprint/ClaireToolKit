@@ -71,7 +71,11 @@
 	if (menu_visible?(self) & MenuShowInPath?(self)) (
 		let info := call(getInfo,self)
 		in
-		printf("<a ~A href=~S class='menu_local_path' title=~S>~I &gt; </a>", (if known?(menuInfo,self) "" else "class='menu_local_path_special' ") , url(self),self_html((if known?(menuSubInfo,self) translate(self.menuSubInfo) else info)) ,self_html(info)))]
+		printf("<a ~A href=~S class='menu_local_path' title=~S>~A &gt; </a>", 
+				(if known?(menuInfo,self) "" else "class='menu_local_path_special' ") , 
+				url(self),
+				((if known?(menuSubInfo,self) translate(self.menuSubInfo) else info)) , //self_html
+				(info)))] // self_html
 
 [showMenuPath(self:WebApp) : void 
 ->	//[0]  showSubMenu(~S) // self,
