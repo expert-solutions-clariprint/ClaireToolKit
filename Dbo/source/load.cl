@@ -84,7 +84,11 @@ value! :: property()
 			(when val := Db/field(db, dbName(prop))
 			in (when clval := 
 					(//[DBOJECTS] update property ~S with ~S // prop, val,
-					if (val % port) value!(db, prop, self, val)
+					if (val % port) 
+						(try value!(db, prop, self, val)
+						catch any (//[-100] !!! error catch in updateValuesFromRow(object = ~S, lp = ~A) : ~S // self, lp,exception!(),
+										unknown))
+									
 					else if (known?(dbSqlType,prop) & prop.dbSqlType % SQL_DATE_TYPE)
 //						(if (prop.dbSqlType = SQL_DATE) make_date(val) else make_utc_date(val))
 						make_date(val)
@@ -94,13 +98,12 @@ value! :: property()
 					else if (range(@(prop, selfOwner)) <= set[integer]) {integer!(x) | x in explode(val,";")}
 					else if (range(@(prop, selfOwner)) <= list[float]) list{float!(x) | x in explode(val,";")}
 					else if (range(@(prop, selfOwner)) <= set[float]) {float!(x) | x in explode(val,";")}
-					else (try value!(db, val, range(@(prop, selfOwner)))
-							catch any (	//[-10] ************ catch exception in updateValuesFromRow *****************,
-										//[-10] ~S // exception!(),
-										//[-10] *****************************,
-										none
-								)))
-				in write(prop, self, clval) else erase(prop, self))
+					else (try value!(db, val, range(@(prop, selfOwner))) 
+							catch any (//[-100] !!! error catch in updateValuesFromRow(object = ~S, lp = ~A) : ~S // self, lp,exception!(),
+										unknown)
+							))
+				in write(prop, self, clval) 
+				else erase(prop, self))
 			else erase(prop, self)), // mapping NULL -> unknown
 		when id := get(idProp, self)
 		in (/*if unknown?(DB_ID_MAP[selfOwner, id])*/ DB_ID_MAP[selfOwner, id] := self // test for duplication
