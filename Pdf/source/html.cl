@@ -1014,15 +1014,15 @@ nth(self:html_table, r:integer, c:integer) : (html_td U {unknown}) =>
 
 [load_img(self:html_img) : void ->
 	when att := self["src"]
-	in (let im := load_png(self.ref_doc, att)
+	in (let im := load_pngUjpg(self.ref_doc, att)
 		in (self.src := im))
 	else when oid := self["data"]
 		in (let p := Core/Oid~(oid)
 			in (case p 
 					(blob
 						(set_index(p, 0),
-						self.src := load_png(self.ref_doc, p)),
-					port self.src := load_png(self.ref_doc, p))))]
+						self.src := load_pngUjpg(self.ref_doc, p)),
+					port self.src := load_pngUjpg(self.ref_doc, p))))]
 
 [html_begin_element(self:{"area"}, e:html_element) : html_element ->
 	html_area(hparent = e)]

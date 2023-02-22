@@ -553,34 +553,53 @@ self_float(f:float) : void ->
 // *********************************************************************
 
 [self_pdf(self:pdf_image_colorspace) : void ->
+	if known?(spdata,self)
 	printf("\n~S 0 obj\n<</Length ~S>>\nstream\n~A\nendstream\nendobj",
 		self.id,
 		length(self.spdata),
 		self.spdata)]
 
 [self_pdf(self:pdf_png) : void ->
-	printf("\n~S 0 obj\n<</Type/XObject", self.id),
-	printf("/Subtype/Image"),
-	printf("/Filter/FlateDecode"),
-	printf("/Width ~S/Height ~S", integer!(self.imwidth), integer!(self.imheight)),
-	printf("/DecodeParms <</Predictor 15/Colors ~S/Columns ~S/BitsPerComponent ~A>>",
-				self.ncolor, integer!(self.imwidth), self.bitdepth),
-	let x := self.colorspace,
-		len := length(x.spdata)
-	in (if (len > 0)
-			(printf("/ColorSpace [/Indexed/DeviceRGB ~S ~S 0 R]", len / 3 - 1, x.id),
-			if (self.t_type = "indexed")
-				printf("/Mask [~S ~S]", self.t_data, self.t_data))
-		else printf("/ColorSpace/~A", self.colorspace.space)),
-	printf("/BitsPerComponent ~A", self.bitdepth),
-	printf("/Length ~S>>", length(self.pngdata)),
-	printf("\nstream\n~A\nendstream\nendobj", self.pngdata)]
+	//[-100] self_pdf@png(~S) // self,
+	if (known?(ncolor,self) & known?(imwidth,self) & known?(bitdepth,self)) (
+		printf("\n~S 0 obj\n<</Type/XObject", self.id),
+		printf("/Subtype/Image"),
+		printf("/Filter/FlateDecode"),
+		printf("/Width ~S/Height ~S", integer!(self.imwidth), integer!(self.imheight)),
+		printf("/DecodeParms <</Predictor 15/Colors ~S/Columns ~S/BitsPerComponent ~A>>",
+					self.ncolor, integer!(self.imwidth), self.bitdepth),
+		let x := self.colorspace,
+			len := length(x.spdata)
+		in (if (len > 0)
+				(printf("/ColorSpace [/Indexed/DeviceRGB ~S ~S 0 R]", len / 3 - 1, x.id),
+				if (self.t_type = "indexed")
+					printf("/Mask [~S ~S]", self.t_data, self.t_data))
+			else printf("/ColorSpace/~A", self.colorspace.space)),
+		printf("/BitsPerComponent ~A", self.bitdepth),
+		printf("/Length ~S>>", length(self.pngdata)),
+		printf("\nstream\n~A\nendstream\nendobj", self.pngdata)
+	)]
 
 [self_pdf(self:pdf_image_show) : void ->
 	printf(" q ~S 0 0 ~S ~S ~S cm /Im~S Do Q ",
 			self.imwidth, self.imheight,
 			self.imx, self.imy,
 			self.im.imid)]
+
+//
+[self_pdf(self:pdf_jpg) : void ->
+	//[-100] self_pdf@jpg(~S) // self,
+	printf("\n~S 0 obj\n<< /Type /XObject", self.id),
+	printf("\n/Subtype /Image"),
+	printf("\n/Filter /DCTDecode"),
+	printf("\n/Width ~S\n/Height ~S", integer!(self.imwidth), integer!(self.imheight)),
+	printf("\n/ColorSpace /~A", self.colorspace.space),
+	printf("\n/BitsPerComponent ~A", self.bitdepth),
+	printf("\n/Length ~S >>", length(self.jpgdata)),
+	printf("\nstream\n~I\nendstream\nendobj\n", 
+			(	set_index(self.jpgdata,0),
+				while not(eof?(self.jpgdata)) putc(getc(self.jpgdata),cout()) ))]
+
 
 // *********************************************************************
 // *   Part 6: interactive form                                        *

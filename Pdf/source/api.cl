@@ -1217,14 +1217,14 @@ show_multilined_text(self:Pdf/pdf_document, // target document
 
 // @doc images
 [show_image(self:pdf_document, path:string, x:float, y:float, w:float, h:float) : void ->
-	show_image(load_png(self, path), x, y, w, h)]
+	show_image(load_pngUjpg(self, path), x, y, w, h)]
 
 [show_image(self:pdf_document, path:string, x:float, y:float) : void =>
-	show_image(load_png(self, path), x, y)]
+	show_image(load_pngUjpg(self, path), x, y)]
 
 // @doc images
 [show_image(self:pdf_document, path:string, r:rectangle) : void =>
-	show_image(load_png(self, path), r)]
+	show_image(load_pngUjpg(self, path), r)]
 
 // *********************************************************************
 // *   Part 10: html objects                                           *

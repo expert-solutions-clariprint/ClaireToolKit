@@ -305,6 +305,19 @@
 			self.imx, self.imy,
 			self.im.imid)]
 
+[self_pdf(self:pdf_jpg) : void ->
+	printf("\n~S 0 obj\n<< /Type /XObject", self.id),
+	printf("\n/Subtype /Image"),
+	printf("\n/Filter /DCTDecode"),
+	printf("\n/Width ~S\n/Height ~S", integer!(self.imwidth), integer!(self.imheight)),
+	printf("\n/ColorSpace /~A", self.colorspace.space),
+	printf("\n/BitsPerComponent ~A", self.bitdepth),
+	printf("\n/Length ~S >>", length(self.jpgdata)),
+	printf("\nstream\n~I\nendstream\nendobj\n", 
+			(	set_index(self.jpgdata,0),
+				while eof?(self.jpgdata) putc(getc(self.jpgdata),cout()) ))]
+
+
 // *********************************************************************
 // *   Part 6: interactive form                                        *
 // *********************************************************************

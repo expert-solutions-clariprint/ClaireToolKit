@@ -384,6 +384,13 @@ pdf_image <: pdf_resource(
 		t_g:integer,
 		t_b:integer)
 
+	pdf_jpg <: pdf_image(
+		jpgdata:blob,
+		bitdepth:integer,
+		colortype:integer,
+		ncolor:integer,
+		colorspace:pdf_image_colorspace)
+
 
 // *********************************************************************
 // *   Part 5: text                                                    *
