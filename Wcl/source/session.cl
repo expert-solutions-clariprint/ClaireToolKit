@@ -130,6 +130,7 @@ claire/$SESSION[vname:string] : any := false
 //					fclose(fopen(session_file(), "w")),
 					//[-100] == Starting a new session with id [~A] // getenv("WCL_SESSION")
 					),
+				header("Cookie: WCL_SESSION="/+ getenv("WCL_SESSION")),
 				if load?
 					try let f := fopen(session_file(), "r")
 						in (if islocked?(f)
