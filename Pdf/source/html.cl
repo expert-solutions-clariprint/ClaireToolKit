@@ -600,7 +600,7 @@ lastdoc:any := unknown
 			if (length(e) > 0)
 				let w := html_basic_word(ref_doc = self.ref_doc,
 									hparent = self,
-									word = replace(unescape(replace(e, "\t", "    ")),"\240", " "))
+									word = unescape(replace(e, "\t", "    ")))
 				in (//self.hchildren add w,
 					line add w)))]
 
@@ -618,7 +618,7 @@ lastdoc:any := unknown
 				in (if (length(data) > 0)
 						(if first? first? := false
 						else putc(' ', out),
-						fwrite(replace(unescape(data), "\240", " "), out))),
+						fwrite(unescape(data), out))),
 			if (not(first?) & cdata[length(cdata)] % {' ', '\n', '\r', '\t'})
 				putc(' ', out),
 			let w := html_basic_word(ref_doc = self.ref_doc,
@@ -647,7 +647,7 @@ lastdoc:any := unknown
 				in (if (length(data) > 0)
 						let w := html_basic_word(ref_doc = self.ref_doc,
 											hparent = self,
-											word = replace(unescape(data), "\240", " "))
+											word = unescape(data))
 						in (if first? first? := false
 							else line add spc,
 							//self.hchildren add w,
@@ -720,12 +720,11 @@ lastdoc:any := unknown
 			in (pfl.hparent := self,
 				let c := left(cdata, 1),
 					nfirst := 2
-				in (if (c % {"\240", "\n", "\t", "\r"}) c := " "
+				in (if (c % { "\n", "\t", "\r"}) c := " "
 					else if (c = "&")
 						let n := find(cdata, ";")
 						in (if (n > 0)
 								(c := unescape(substring(cdata, 1, n)),
-								if (c = "\240") c := " ",
 								nfirst := n + 1)),
 					case css_get(pfl, css_text-transform)
 						({"capitalize", "uppercase"} c := upper(c),

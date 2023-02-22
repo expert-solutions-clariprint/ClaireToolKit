@@ -307,14 +307,44 @@ FONTS[fontname:string, bi:{NORM,BOLD,ITALIC,BOLD_ITALIC}] : (font_descriptor U {
 // \/code
 // @cat
 
+[mblen(s:string) : integer -> externC("mblen(s,	strlen(s))", integer)]
+
+private/UTF8_MODE:boolean := false
+
+[set_utf8() : boolean => UTF8_MODE := true]
+[unset_utf8() : boolean => UTF8_MODE := false]
 
 [get_font_height(self:pdf_document, num:integer) : float ->
 	let f := self.font_map[num] as font_descriptor
 	in ((f.FontBBox[4] - f.FontBBox[2]) / 1000.0)]
 
+
 [get_font_height(self:pdf_document, num:integer, s:float) : float ->
 	let f := self.font_map[num] as font_descriptor
 	in (s * (f.FontBBox[4] - f.FontBBox[2]) / 1000.0)]
+
+[get_text_width_utf8(t:string, f:font_descriptor, s:float) : float ->
+	let w := 0.0, fl := f.C, fl-1 := f.C-1
+	in (for i in (1 .. length(t))
+			let c := (#if compiler.loading?
+							externC("(int)((unsigned char)t[i - 1])", integer)
+						else integer!(t[i])) as I256,
+				m! := mac!(c),
+				m2n := mac2name(m!),
+				flm! := fl[m!]
+			in (case flm!
+					(tuple
+						(if (flm![1] <= 0.) w :+ f.maxc
+						else w :+ flm![1] as float),
+					any
+						let fl-1m2n := fl-1[m2n]
+						in case fl-1m2n
+							(tuple
+								(if (fl-1m2n[1] <= 0.) w :+ f.maxc
+								else w :+ fl-1m2n[1] as float)))),
+				//if known?(fl[m!]) w :+ fl[m!][1] as float
+				//else if known?(fl-1[m2n]) w :+ fl-1[m2n][1] as float),
+		w * s / 1000.0)]
 
 [get_text_width(t:string, f:font_descriptor, s:float) : float ->
 	let w := 0.0, fl := f.C, fl-1 := f.C-1

@@ -143,7 +143,9 @@
 	printf("\n/Subtype /Type1"),
 	printf("\n/Name /F~S", self.fontnum),
 	printf("\n/BaseFont /~A", self.font.FontName),
-	printf("\n/Encoding /WinAnsiEncoding"),
+	if (UTF8_MODE)
+		printf("\n/Encoding /WinAnsiEncoding")
+	else printf("\n/Encoding /WinAnsiEncoding")
 	princ("\n>>\nendobj\n")]
 
 
@@ -241,7 +243,9 @@
 		printf("BT ~S ~S Td", self.x, self.y)
 	else let a := self.angle, ca := cos(a), sa := sin(a)
 		in printf("BT ~S ~S ~S ~S ~S ~S Tm", ca, -(sa), sa, ca, self.x, self.y)]
-[self_pdf(self:pdf_show_text) : void -> printf("(~I) Tj", filter_pdf_string(self.text))]
+[self_pdf(self:pdf_show_text) : void -> (
+	//[0] pdf_show_text ~S // self.text,
+	printf("(~I) Tj", filter_pdf_string(self.text)))]
 [self_pdf(self:pdf_end_text) : void -> printf("ET")]
 [self_pdf(self:pdf_select_font) : void -> printf("/F~S ~S Tf", self.fontnum, self.fontsize)]
 [self_pdf(self:pdf_color) : void -> printf("~S ~S ~S rg", self.r, self.g, self.b)]

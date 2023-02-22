@@ -339,7 +339,8 @@ unknown_element :: mClaire/new!(html_element)
 	in (self.catalog.current_section := sec[2],
 		set_resource_target(sec[2]))
 	else let sec := pdf_section(doc = self, section_root = self.catalog)
-		in (set_resource_target(sec),
+		in (//[0] add section with section_root = ~S // self.catalog,
+			set_resource_target(sec),
 			self.section_order :add tuple(secname, sec),
 			set_dimension(sec, self.page_format),
 			self.catalog.current_section := sec)]

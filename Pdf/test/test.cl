@@ -2,7 +2,7 @@
 
 (time_set())
 
-d :: document!("A4", false, 5)
+d :: document!("A4", false)
 //(d.htmldebug? := true)
 
 (print_in_css(d) ?>
@@ -70,7 +70,8 @@ wcl_read(p:port) ->
 do_test(test:string, fp:string) ->
 	let f := fopen(test / fp, "r"),
 		p := port!()
-	in (freadwrite(f,p),
+	in (//[2] do_test(~S,~S) // test , fp ,
+		freadwrite(f,p),
 		fclose(f),
 		//<sb> cutely backed script
 		print_in_html(d),
@@ -103,9 +104,9 @@ end_of_html_header(d))
 ?><p>Footer <a href="www.clariprint.com">bob</a> <pagenum>/<pagecount></p><? ,
 end_of_html_footer(d))
 
-(do_tests())
+// (do_tests())
 
-
+(load("test/text/utf8.cl"))
 
 (new_section_before(d, "toc", "body"),
 print_in_html(d),

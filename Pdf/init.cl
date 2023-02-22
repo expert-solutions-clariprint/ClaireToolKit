@@ -5,10 +5,12 @@
 
 (use_module("Zlib"))
 (use_module("Openssl"))
+(use_module("Iconv"))
 
 Pdf :: module(
-	uses = list(Serialize, Reader, Openssl, Zlib),
-	made_of = list("<math.h>",
+	uses = list(Serialize, Reader, Openssl, Zlib, Iconv),
+	made_of = list("<stdlib.h>",
+					"<math.h>",
 					"model.cl",
 					"tool.cl",
 					"font.cl",

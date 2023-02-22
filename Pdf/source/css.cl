@@ -1257,6 +1257,7 @@ LOWER-ROMAN :: list("i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x",
 					"xi", "xii", "xiii", "xiv", "xv", "xvi", "xvii", "xviii", "xix", "xx", "xx...")
 
 [format_counter(self:css_counter_reference, v:integer) : string ->
+	//[0] format_counter(~S,~A) // celf, v,
 	case self.style
 		({"lower-roman"} LOWER-ROMAN[v min length(LOWER-ROMAN) max 1],
 		{"upper-roman"} upper(LOWER-ROMAN[v min length(LOWER-ROMAN) max 1]),

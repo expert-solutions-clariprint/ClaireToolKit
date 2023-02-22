@@ -900,6 +900,7 @@ self_float(f:float) : void ->
 	if (w.hparent % html_inline_element)
 		draw_background(w, w.X, w.Y + w.ascender, w.width, w.height),
 	draw_underline(w, w.X, w.Y, w.width),
+	//[0] self_pdf_word(~S) // w.word,
 	printf("~I BT 1 0 0 1~I~I Tm~I (~I ) Tj ET",
 			printf("~I rg", self_pdf_color(css_get(w, css_color))),
 			self_float(w.X),
