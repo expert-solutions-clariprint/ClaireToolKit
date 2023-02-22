@@ -183,7 +183,7 @@ CYPHERS :: {
 		externC("ClEnv->pushAttempt(olen)"),
 		externC("int i = 0; char *p = ClEnv->buffer"),
 		externC("for(;i < len;i++, p += 2) {"),
-			externC("sprintf(p,\"%.2x\", (unsigned)((unsigned char*)self)[i]); }"),
+			externC("sprintf(p,\"%.2lx\", (unsigned)((unsigned char*)self)[i]); }"),
 		copy(externC("ClEnv->buffer", string), olen))]
 
 
