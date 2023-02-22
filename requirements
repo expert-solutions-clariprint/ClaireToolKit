@@ -1,0 +1,4 @@
+apt install g++ make zlibc
+ zlib1g-dev
+      libssl-dev
+      libmariadb-dev
