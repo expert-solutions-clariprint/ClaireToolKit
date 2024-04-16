@@ -142,6 +142,24 @@ FCGI_FILTER :: 1
 				//[0] end process
 				)))]
 
+[serve2() : void
+->	//[0] server pid: ~S // getpid(),
+	let s := server!(1212)
+	in (while true (
+			if (forker?())
+				(
+				//[0] wait child,
+				waitpid(-1))
+			else (
+				let c := accept(s)
+				in (//[0] accept,
+					decode_records(c),
+					//[0] end process,
+					flush(c),
+					fclose(c),
+					//[0] exit,
+					exit(0)))))]
+
 
 /* request body */
 
@@ -184,6 +202,7 @@ typedef struct {
 
 
 [option_respond(self:{"-fastcgi"},l: list) : void -> serve()]
+[option_respond(self:{"-fastcgi2"},l: list) : void -> serve2()]
 
 
 [process(p:port,self:fcgi_record) : boolean
