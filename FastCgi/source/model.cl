@@ -1,7 +1,5 @@
 
 
-
-
 FCGI_BEGIN_REQUEST      ::  1
 FCGI_ABORT_REQUEST      ::  2
 FCGI_END_REQUEST        ::  3
@@ -43,8 +41,6 @@ typedef struct {
         } FCGI_BeginRequestBody
 */
 
-RequestBody <: ephemeral_object()
-
 
 fcgi_request_id:integer := 0
 
@@ -52,14 +48,13 @@ fcgi_context <: ephemeral_object()
 fcgi_record <: ephemeral_object(
 	vers:integer,
 	kind:integer,
-	request_id:integer,
-	body:RequestBody)
+	request_id:integer)
 
 fcgi_begin_request       <: fcgi_record(role:integer,flags:integer)
 fcgi_abort_request       <: fcgi_record()
 fcgi_end_request         <: fcgi_record()
 fcgi_params              <: fcgi_record(values:list[tuple])
-fcgi_stdin               <: fcgi_record()
+fcgi_stdin               <: fcgi_record(datas:blob)
 fcgi_stdout              <: fcgi_record()
 fcgi_stderr              <: fcgi_record()
 fcgi_data                <: fcgi_record()
@@ -101,8 +96,11 @@ FCGI_RESPONDER :: 1
 FCGI_AUTHORIZER :: 1
 FCGI_FILTER :: 1
 
+FCGI_RECORDS:list := list<fcgi_record>()
+
+
 [decode_record(p:port) : fcgi_record
-->	//[1] decode_record,
+->	//[0] decode_record readable ? ~S // readable?(p),
 	let v := geti(p),
 		k := geti(p),
 		t := fcgi_record!(k)
@@ -125,26 +123,39 @@ FCGI_FILTER :: 1
 			) else //[2] no padding
 			),
 		//[1]  ==> ~S // t,
+		add(FCGI_RECORDS, t),
 		t)]
 
-[decode_records(p:port) : void
+[decode_records_ok(p:port) : void
 -> while (
 	//[1] decode_records...,
-	when t := decode_record(p) in process(p,t) else true) (none)]
+	when t := decode_record(p) in (process(p,t)) else true) (none)]
+
+[decode_records(p:port) : void
+-> //[1] decode_records(~S) // p,
+	while (when t := decode_record(p) in (process(p,t)) else true) (none)]
 
 
+CGI_HOST:string := ""
+CGI_SOCKET:string := ""
+CGI_PORT:integer := 0
+
+
+
+
+[create_server() : listener
+->	if (CGI_HOST != "" & CGI_PORT > 0) server!(CGI_HOST, CGI_PORT, 10)
+	else if (CGI_PORT > 0) server!(CGI_PORT)
+	else if (CGI_SOCKET != "") server!(CGI_SOCKET)
+	else (
+		CGI_SOCKET := "/tmp/" /+ last(explode(getenv("_"),"/")) /+ ".sock",
+		//[0] use socket ~S // CGI_SOCKET,
+		server!(CGI_SOCKET))]
+
+/* Server */
 [serve() : void
-->	let s := server!(1212)
-	in (while true (
-			let c := accept(s)
-			in (//[0] accept, 
-				decode_records(c),
-				//[0] end process
-				)))]
-
-[serve2() : void
 ->	//[0] server pid: ~S // getpid(),
-	let s := server!(1212)
+	let s := create_server()
 	in (while true (
 			if (forker?())
 				(
@@ -154,6 +165,7 @@ FCGI_FILTER :: 1
 				let c := accept(s)
 				in (//[0] accept,
 					decode_records(c),
+					send_reponse(c),
 					//[0] end process,
 					flush(c),
 					fclose(c),
@@ -161,14 +173,21 @@ FCGI_FILTER :: 1
 					exit(0)))))]
 
 
-/* request body */
+[option_respond(self:{"-fastcgi"},l: list) : void -> serve()]
 
-EmptyBody <: ephemeral_object()
+[option_respond(self:{"-cgi-socket"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	CGI_SOCKET := l[1],
+	l << 1)]
 
+[option_respond(self:{"-cgi-port"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	CGI_PORT := integer!(l[1]),
+	l << 1)]
 
 
 [decode_content(p:port,self:fcgi_record,len:integer)
-->	//[0] unknown content ~S // self,
+->	//[1] unknown content ~S // self,
 	fread(p,len)]
 
 /*
@@ -185,24 +204,47 @@ typedef struct {
 		(	self.role := geti2(p),
 			self.flags := geti(p),
 			fread(p,5), // reserved
-			//[2] role:  ~A // self.role,
-			//[2] flags: ~A // self.flags
+			//[3] role:  ~A // self.role,
+			//[3] flags: ~A // self.flags
 				)]
 
 
 [decode_content(p:port,self:fcgi_params,len:integer)
-->	//[1] decode_content@fcgi_params ~S   len: ~A // self , len,
+->	//[2] decode_content@fcgi_params ~S   len: ~A // self , len,
 	if (len > 0) (
 		self.values := cgi_tuples(p,len),
-		//[2] values : ~S // self.values
+		//[3] values : ~S // self.values
 	) else (
-		//[1] no values
+		//[3] no values
 		)]
+[decode_content(p:port,self:fcgi_stdin,len:integer)
+->	//[2] decode_content ~S // self,
+	let b := blob!() in 
+	(
+		freadwrite(p,b,len),
+		self.datas := b
+	)]
 
 
+/* run permission */
+passwd <: import()
+(c_interface(passwd, "struct passwd *"))
+[getpwnam(username:string) : passwd -> function!(getpwnam)]
 
-[option_respond(self:{"-fastcgi"},l: list) : void -> serve()]
-[option_respond(self:{"-fastcgi2"},l: list) : void -> serve2()]
+[init_user(username:string) : void ->
+	//[-100] == Change privilege for user ~A // username,
+	let pw := getpwnam(username)
+	in (if externC("(pw == NULL ? CTRUE : CFALSE)", boolean)
+			externC("Cerrorno(74,_string_(\"getpwnam\"),0)"),
+		if externC("(setgid(pw->pw_gid) ? CTRUE : CFALSE)", boolean)
+			externC("Cerrorno(74,_string_(\"setgid\"),0)"),
+		if externC("(setuid(pw->pw_uid) ? CTRUE : CFALSE)", boolean)
+			externC("Cerrorno(74,_string_(\"setuid\"),0)"))]
+		
+option_respond(self:{"-cgi-user"},l: list) : void ->
+	(if not(l) invalid_option_argument(),
+	init_user(l[1]),
+	l << 1)
 
 
 [process(p:port,self:fcgi_record) : boolean
@@ -212,8 +254,10 @@ typedef struct {
 
 request_count:integer := 0
 [process(p:port,self:fcgi_stdin) : boolean
--> //[0] process ~S // self,
-	let pp := record_port!(p),
+-> //[0] process ~S ~S // self, get(datas,self),
+	known?(datas,self)]
+
+/*	let pp := record_port!(p),
 		old_p := use_as_output(pp)
 	in (pp.request_id  := fcgi_request_id,
 			//[0] Send content ..,
@@ -222,8 +266,58 @@ request_count:integer := 0
 			fwrite("coucou coucou \n",pp),
 			printf("id request ~A \n",fcgi_request_id),
 			printf("n request ~A \n",request_count),
-			//[0] end request ..,
-			use_as_output(old_p),
-			fclose(p),
-			false)]
+			for r in FCGI_RECORDS
+			(
+				printf("~S\n",r),
+				if (r % fcgi_params)
+				(
+					when vals := get(values,r)
+					in for i in vals printf("~S : ~S \n",i[1],i[2])),
+				if (r % fcgi_stdin)
+				(
+					when d := get(datas,r) in freadwrite(r.datas,cout())
+				)
+			),
+			for i in (1 .. 1000)
+			(
+				printf("~A ~A\n",i, make_string(100,'X'))
+			),
 
+			//[0] end request ..,
+			flush(pp),
+			fclose(pp),
+
+			use_as_output(old_p),
+			true)]
+*/
+[send_reponse(p:port) : void
+->	let pp := record_port!(p),
+		old_p := use_as_output(pp)
+	in (
+		pp.request_id  := fcgi_request_id,
+			//[0] Send content ..,
+		request_count :+ 1,
+		fwrite("content-type: text-plain\n\n",pp), 
+		fwrite("coucou coucou \n",pp),
+		printf("id request ~A \n",fcgi_request_id),
+		printf("n request ~A \n",request_count),
+		for r in FCGI_RECORDS
+		(
+			printf("~S\n",r),
+			if (r % fcgi_params)
+			(
+				when vals := get(values,r)
+				in for i in vals printf("~S : ~S \n",i[1],i[2])),
+			if (r % fcgi_stdin)
+			(
+				when d := get(datas,r) in freadwrite(r.datas,cout())
+			)
+		),
+		
+		for i in (1 .. 1000)
+		(
+			printf("~A ~A\n",i, make_string(100,'X'))
+		), 
+		flush(pp),
+		fclose(pp),
+		use_as_output(old_p))]

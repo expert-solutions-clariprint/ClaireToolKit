@@ -83,24 +83,25 @@ typedef struct {
 ->	//[2] send_header(~S,~A,~A) // self, len, kind,
 	externC("FCGI_Record_Header h;"),
 	externC("h.version = 1"),
-	externC("h.type = (int)kind"),
+	externC("h.type = (char)(0xFF & kind)"),
 	externC("long req_id = (long)self->request_id"),
-	externC("h.requestIdB1 = (int)((0xFF00 & req_id) >> 8)"),
-	externC("h.requestIdB0 = (int)(0xFF & req_id)"),
-	externC("h.contentLengthB1 = (int)(0xFF00 & len) >> 8"),
-	externC("h.contentLengthB0 = (int)(0xFF & len)"),
-	externC("h.paddingLength = 1"),
+	externC("h.requestIdB1 = (char)(0xFF & (req_id >> 8))"),
+	externC("h.requestIdB0 = (char)(0xFF & req_id)"),
+	externC("h.contentLengthB1 = (char)(0xFF & (len >> 8))"),
+	externC("h.contentLengthB0 = (char)(0xFF & len)"),
+	externC("h.paddingLength = 0"),
 	externC("h.reserved = 0"),
-	externC("char tmp[8]"),
-	externC("memcpy(tmp,&h,8)"),
-	// externC("printf(\"req_id %d : %d - %d \\n\",req_id,h.requestIdB1,h.requestIdB0)"),
-	// externC("printf(\"contentLength %d : %d - %d \\n\",len,h.contentLengthB1,h.contentLengthB0)"),
-	write_port(self.target, externC("tmp",char*),8)]
+	//externC("char tmp[8]"),
+	//externC("memcpy(tmp,&h,8)"),
+	//externC("printf(\"req_id %d : %x - %d \\n\",req_id,h.requestIdB1,h.requestIdB0)"),
+	//externC("printf(\"contentLength %d : %x - %x \\n\",len,h.contentLengthB1,h.contentLengthB0)"),
+	//externC("printf(\"record : %s \\n\",tmp)"),
+	write_port(self.target, externC("&h",char*),8)]
 
  
 [send_fcgi_end_request(self:record_port)  : void
 -> 	//[2] send_fcgi_end_request(),
-	send_header(self,8,FCGI_REQUEST_COMPLETE),
+	send_header(self,8,FCGI_END_REQUEST),
 	externC("FCGI_EndRequestBody h;"),
 	externC("h.appStatusB3 = 0"),
 	externC("h.appStatusB2 = 0"),
@@ -110,36 +111,55 @@ typedef struct {
 	externC("h.reserved[0] = 0"),
 	externC("h.reserved[1] = 0"),
 	externC("h.reserved[2] = 0"),
-	externC("char tmp[8]"),
-	externC("memcpy(tmp,&h,8)"),
-	write_port(self.target, externC("tmp",char*),8)]
+	//externC("char tmp[8]"),
+	//externC("memcpy(tmp,&h,8)"),
+	write_port(self.target, externC("&h",char*),8)]
+
+
+// MAX_RECORD_DATA_SIZE :: 65535
+MAX_RECORD_DATA_SIZE :: 8192   // set un small record content size for better reliability
 
 flush_port(self:record_port) : void ->
 	let pend := self.pendingw,
-		len := length(pend)
-	in (//[2] flush_port FCGI_STDOUT,
-		if (self.on_record? = false)
-			send_header(self,len,FCGI_STDOUT),
-		write_port(self.target, pend.Core/data, len),
-		write_port(self.target,"\0",1),
-		self.on_record? := false,
-		set_length(pend, 0))
-
+		d := self.pendingw.Core/data,
+		len  := length(pend)
+	in (//[0] flush_port FCGI_STDOUT ~A // len,
+		if (len > 0) (
+			while (len > 0) (
+				let tosent :=  min(MAX_RECORD_DATA_SIZE,len) // j'en envoie tosent avec au max  MAX_RECORD_DATA_SIZE
+				in (
+					//[3] ----- flush_port ~A // tosent,
+					send_header(self,tosent,FCGI_STDOUT),
+					write_port(self.target,d , tosent),
+					// externC("printf(\"d = %x  tosent = %ld\",d,tosent)"),
+					externC("d += tosent"),
+					// externC("printf(\" => %x  \\n\",d)"),
+					// write_port(self.target,"\0",1),
+					len :- tosent // il reste len a enoyer
+				)),
+			self.on_record? := false,
+			self.pendingw := blob!(),
+			//[3] after flush =======> length ~A // length(self.pendingw)
+		))
 
 write_port(self:record_port, buf:char*, len:integer) : integer ->
-	let pend := self.pendingw
+	let pend := self.pendingw,
+		tosend := len
 	in (write_port(pend, buf, len),
-		if (length(pend) > 1024)
-			flush_port(self),
+		if (length(self.pendingw) >= MAX_RECORD_DATA_SIZE) flush_port(self),
 		len)
 
 close_port(self:record_port) : void ->
 	(
-	flush_port(self),
+	//[0] will ... close ,
 	send_fcgi_end_request(self),
-	erase(target,self), // remove filter
-	fclose(self.pendingr),
-	fclose(self.pendingw))
+	flush_port(self),
+	//[0] remove has filter ,
+	erase(target,self),
+	// fclose(self.pendingr),
+	// fclose(self.pendingw),
+	//[0] closed
+	)
 
 eof_port?(self:record_port) : boolean -> self.eof_reached?
 
