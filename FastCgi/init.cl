@@ -7,7 +7,7 @@
 
 FastCgi :: module(
 	uses = list(Http),
-	made_of = list("model.cl","utils.cl","fast_cgi_types.h" /* ,"<fcgi_stdio.h>" */),
+	made_of = list("model.cl","utils.cl","server.cl","system.cl","fast_cgi_types.h" /* ,"<fcgi_stdio.h>" */),
 	source = "source",
 	version = "v1.0.0") // put your version here
 

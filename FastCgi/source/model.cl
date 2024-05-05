@@ -1,5 +1,12 @@
 
 
+
+
+// *********************************************************************
+// *   Part 2: tools                                             *
+// *********************************************************************
+
+
 FCGI_BEGIN_REQUEST      ::  1
 FCGI_ABORT_REQUEST      ::  2
 FCGI_END_REQUEST        ::  3
@@ -12,39 +19,16 @@ FCGI_GET_VALUES         ::  9
 FCGI_GET_VALUES_RESULT  :: 10
 FCGI_UNKNOWN_TYPE       :: 11
 
-[cgiType(i:integer) : string
--> case i (
-		{ 1} "FCGI_BEGIN_REQUEST",
-		{ 2} "FCGI_ABORT_REQUEST",
-		{ 3} "FCGI_END_REQUEST",
-		{ 4} "FCGI_PARAMS",
-		{ 5} "FCGI_STDIN",
-		{ 6} "FCGI_STDOUT",
-		{ 7} "FCGI_STDERR",
-		{ 8} "FCGI_DATA",
-		{ 9} "FCGI_GET_VALUES",
-		{10} "FCGI_GET_VALUES_RESULT",
-		{11} "FCGI_UNKNOWN_TYPE",
-		any "?")]
+CGI_HOST:string := ""
+CGI_SOCKET:string := ""
+CGI_PORT:integer := 0
 
+record_port <: filter
 
+// *********************************************************************
+// *   Part 2: tools                                             *
+// *********************************************************************
 
-
-
-FCGI_BEGIN_REQUEST :: 1
-/*
-typedef struct {
-            unsigned char roleB1;
-            unsigned char roleB0;
-            unsigned char flags;
-            unsigned char reserved[5];
-        } FCGI_BeginRequestBody
-*/
-
-
-fcgi_request_id:integer := 0
-
-fcgi_context <: ephemeral_object()
 fcgi_record <: ephemeral_object(
 	vers:integer,
 	kind:integer,
@@ -53,8 +37,8 @@ fcgi_record <: ephemeral_object(
 fcgi_begin_request       <: fcgi_record(role:integer,flags:integer)
 fcgi_abort_request       <: fcgi_record()
 fcgi_end_request         <: fcgi_record()
-fcgi_params              <: fcgi_record(values:list[tuple])
-fcgi_stdin               <: fcgi_record(datas:blob)
+fcgi_params              <: fcgi_record()
+fcgi_stdin               <: fcgi_record(final?:boolean = false)
 fcgi_stdout              <: fcgi_record()
 fcgi_stderr              <: fcgi_record()
 fcgi_data                <: fcgi_record()
@@ -107,7 +91,8 @@ FCGI_RECORDS:list := list<fcgi_record>()
 	in (t.vers := v,
 		//[2] version : ~A // t.vers,
 		//[2] type : ~S // cgiType(t.kind),
-		t.request_id := geti2(p),
+		p.request_id := geti2(p),
+		t.request_id := p.request_id,
 		//[2] id : ~A // t.request_id,
 		let content_len := geti2(p),
 			padding_len := geti(p),
@@ -116,7 +101,7 @@ FCGI_RECORDS:list := list<fcgi_record>()
 		in (//[2] content_len : ~A // content_len,
 			//[2] padding_len : ~A // padding_len,
 			//[2] reserved : ~A // reserved, 
-			if (content_len > 0) decode_content(p,t,content_len),			
+			decode_content(p,t,content_len),			
 			if (padding_len > 0) (
 				fread(p,padding_len),
 				//[2] padding read
@@ -126,69 +111,54 @@ FCGI_RECORDS:list := list<fcgi_record>()
 		add(FCGI_RECORDS, t),
 		t)]
 
-[decode_records_ok(p:port) : void
--> while (
-	//[1] decode_records...,
-	when t := decode_record(p) in (process(p,t)) else true) (none)]
 
 [decode_records(p:port) : void
 -> //[1] decode_records(~S) // p,
 	while (when t := decode_record(p) in (process(p,t)) else true) (none)]
 
 
-CGI_HOST:string := ""
-CGI_SOCKET:string := ""
-CGI_PORT:integer := 0
 
 
-
-
-[create_server() : listener
-->	if (CGI_HOST != "" & CGI_PORT > 0) server!(CGI_HOST, CGI_PORT, 10)
-	else if (CGI_PORT > 0) server!(CGI_PORT)
-	else if (CGI_SOCKET != "") server!(CGI_SOCKET)
-	else (
-		CGI_SOCKET := "/tmp/" /+ last(explode(getenv("_"),"/")) /+ ".sock",
-		//[0] use socket ~S // CGI_SOCKET,
-		server!(CGI_SOCKET))]
-
-/* Server */
-[serve() : void
-->	//[0] server pid: ~S // getpid(),
-	let s := create_server()
-	in (while true (
-			if (forker?())
-				(
-				//[0] wait child,
-				waitpid(-1))
-			else (
-				let c := accept(s)
-				in (//[0] accept,
-					decode_records(c),
-					send_reponse(c),
-					//[0] end process,
-					flush(c),
-					fclose(c),
-					//[0] exit,
-					exit(0)))))]
 
 
 [option_respond(self:{"-fastcgi"},l: list) : void -> serve()]
+[option_usage(opt:{"-fastcgi"}) : tuple(string, string, string) ->
+	tuple("Start FastCgi server",
+			"-fastcgi",
+			"Star a FastCgi server. Default create a socket name /tmp/<processname>.sock. " /+
+			"Use -cgi-socket or -cgi-port change connection mode")]
 
 [option_respond(self:{"-cgi-socket"},l: list) : void 
 -> (if not(l) invalid_option_argument(),
 	CGI_SOCKET := l[1],
 	l << 1)]
+[option_usage(opt:{"-cgi-socket"}) : tuple(string, string, string) ->
+	tuple("Setting socket file",
+			"-cgi-socket <socket_path:string>",
+			"Create a socket file a specified path fo incoming connexion. If not specified use default socket.")]
+
+[option_respond(self:{"-socket"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	CGI_SOCKET := l[1],
+	l << 1)]
+[option_usage(opt:{"-socket"}) : tuple(string, string, string) ->
+	tuple("Setting socket file",
+			"-socket <socket_path:string>",
+			"Create a socket file a specified path fo incoming connexion. If not specified use default socket.")]
+
 
 [option_respond(self:{"-cgi-port"},l: list) : void 
 -> (if not(l) invalid_option_argument(),
 	CGI_PORT := integer!(l[1]),
 	l << 1)]
+[option_usage(opt:{"-cgi-port"}) : tuple(string, string, string) ->
+	tuple("Setting listening port",
+			"-cgi-port <port:integer>",
+			"Setting listening port. If not specified socket mode.")]
 
-
-[decode_content(p:port,self:fcgi_record,len:integer)
+[decode_content(p:record_port,self:fcgi_record,len:integer)
 ->	//[1] unknown content ~S // self,
-	fread(p,len)]
+	if (len > 0) fread(p,len)]
 
 /*
 typedef struct {
@@ -198,31 +168,36 @@ typedef struct {
             unsigned char reserved[5];
         } FCGI_BeginRequestBody;
  */
-[decode_content(p:port,self:fcgi_begin_request,len:integer)
+[decode_content(p:record_port,self:fcgi_begin_request,len:integer)
 ->	//[1] decode_content@fcgi_begin_request ~S   len: ~A // self , len,
 	if (len = 8)
-		(	self.role := geti2(p),
-			self.flags := geti(p),
+		(	p.role := geti2(p),
+			p.flags := geti(p),
 			fread(p,5), // reserved
-			//[3] role:  ~A // self.role,
-			//[3] flags: ~A // self.flags
+			//[3] role:  ~A // p.role,
+			//[3] flags: ~A // p.flags
 				)]
 
 
-[decode_content(p:port,self:fcgi_params,len:integer)
-->	//[2] decode_content@fcgi_params ~S   len: ~A // self , len,
+[decode_content(p:record_port, self:fcgi_params, len:integer)
+->	//[0] decode_content@fcgi_params ~S   len: ~A // self , len,
 	if (len > 0) (
-		self.values := cgi_tuples(p,len),
-		//[3] values : ~S // self.values
+		for i in cgi_tuples(p,len) p.cgi_params[i[1]] := i[2]
+		// self.values := cgi_tuples(p,len)
 	) else (
 		//[3] no values
 		)]
-[decode_content(p:port,self:fcgi_stdin,len:integer)
-->	//[2] decode_content ~S // self,
-	let b := blob!() in 
-	(
-		freadwrite(p,b,len),
-		self.datas := b
+
+[decode_content(p:record_port, self:fcgi_stdin, len:integer)
+->	//[0] decode_content ~S len:~A // self, len,
+	if (len > 0) (
+		p.stdin? := true,
+		if not(known?(cgi_stdin,p)) p.cgi_stdin := blob!(),
+		freadwrite(p,p.cgi_stdin,len)
+		 
+	) else (
+		//[0] ====== FINAL ,
+		self.final? := true
 	)]
 
 
@@ -245,79 +220,199 @@ option_respond(self:{"-cgi-user"},l: list) : void ->
 	(if not(l) invalid_option_argument(),
 	init_user(l[1]),
 	l << 1)
+[option_usage(opt:{"-cgi-user"}) : tuple(string, string, string) ->
+	tuple("Return CGI Info (debug)",
+			"-cgi-user <u:user>",
+			"Run under specified user privilege.")]
 
 
 [process(p:port,self:fcgi_record) : boolean
 -> //[0] process ~S // self,
-	fcgi_request_id := self.request_id,
 	true]
 
 request_count:integer := 0
 [process(p:port,self:fcgi_stdin) : boolean
--> //[0] process ~S ~S // self, get(datas,self),
-	known?(datas,self)]
+-> //[0] process ~S  final? ~S // self, self.final?,
+	not(self.final?)]
 
-/*	let pp := record_port!(p),
-		old_p := use_as_output(pp)
-	in (pp.request_id  := fcgi_request_id,
-			//[0] Send content ..,
-			request_count :+ 1,
-			fwrite("content-type: text-plain\n\n",pp), 
-			fwrite("coucou coucou \n",pp),
-			printf("id request ~A \n",fcgi_request_id),
-			printf("n request ~A \n",request_count),
-			for r in FCGI_RECORDS
-			(
-				printf("~S\n",r),
-				if (r % fcgi_params)
-				(
-					when vals := get(values,r)
-					in for i in vals printf("~S : ~S \n",i[1],i[2])),
-				if (r % fcgi_stdin)
-				(
-					when d := get(datas,r) in freadwrite(r.datas,cout())
-				)
-			),
-			for i in (1 .. 1000)
-			(
-				printf("~A ~A\n",i, make_string(100,'X'))
-			),
+cgi_handler <: object(
+	callback:property,
+	callback_ctx:any,
+	priority:integer = 10)
 
-			//[0] end request ..,
-			flush(pp),
-			fclose(pp),
+cgi_handlers:list[cgi_handler] := list<cgi_handler>()
 
-			use_as_output(old_p),
-			true)]
-*/
-[send_reponse(p:port) : void
-->	let pp := record_port!(p),
-		old_p := use_as_output(pp)
-	in (
-		pp.request_id  := fcgi_request_id,
-			//[0] Send content ..,
-		request_count :+ 1,
-		fwrite("content-type: text-plain\n\n",pp), 
-		fwrite("coucou coucou \n",pp),
-		printf("id request ~A \n",fcgi_request_id),
-		printf("n request ~A \n",request_count),
-		for r in FCGI_RECORDS
-		(
-			printf("~S\n",r),
-			if (r % fcgi_params)
-			(
-				when vals := get(values,r)
-				in for i in vals printf("~S : ~S \n",i[1],i[2])),
-			if (r % fcgi_stdin)
-			(
-				when d := get(datas,r) in freadwrite(r.datas,cout())
-			)
-		),
+[sort_cgi_handler(a:cgi_handler,b:cgi_handler) : boolean 
+-> a.priority < b.priority]
+
+
+[add_handler(p:property,ctx:any,prio:integer)
+->	add(cgi_handlers,
+		cgi_handler(callback = p , callback_ctx = ctx, priority = prio ))]
+
+[reponse_mirror(pp:record_port,b:boolean) : void
+-> 	fwrite("Content-Type: text/plain\r\n",pp),
+	fwrite("\r\n",pp),
+	when d := get(cgi_stdin,pp) in (
+		//[0] wrote stdin to stdout ~Sb // length(d),
+		let n := freadwrite(d,pp)
+		in //[0] freadwrite(~S => ~S) = > ~Ab // d, pp , n
+	) else (
+		//[0] no input data
+	)]
+
+
+
+[option_respond(self:{"-cgi-mirror"},l: list) : void -> add_handler(reponse_mirror,true,15)]
+[option_usage(opt:{"-cgi-mirror"}) : tuple(string, string, string) ->
+	tuple("create a mirror cgi (debug)",
+			"-cgi-mirror",
+			"Add a simple FastCGI handler which resend the input request (mirror)")]
+
+
+[reponse_info(pp:record_port,b:boolean) : void
+->	random!(),
+	let oldp := use_as_output(pp)
+	in (	
+		sleep(5000 + random(10000)),
+		printf("content-type: text/plain\n\n"),
+
+		printf("id request ~A \n",pp.request_id),
+		printf("process id ~A \n",getpid()),
+		///printf("n request ~A \n",request_count),
+		printf("params ~S \n",pp.cgi_params),
+		if (known?(cgi_stdin,pp ))
+			printf("stdin : ~Ab\n",length(pp.cgi_stdin))
+		else printf("stdin: empty"),
 		
-		for i in (1 .. 1000)
-		(
-			printf("~A ~A\n",i, make_string(100,'X'))
-		), 
-		flush(pp),
-		fclose(pp),
-		use_as_output(old_p))]
+		use_as_output(oldp))]
+
+[option_usage(opt:{"-cgi-info"}) : tuple(string, string, string) ->
+	tuple("Return CGI Info (debug)",
+			"-cgi-info",
+			"Add a simple FastCGI handler which display some CGI data et request information")]
+
+[option_respond(self:{"-cgi-info"}, l:list) : void -> add_handler(reponse_info,true,5)]
+
+
+
+[option_respond(self:{"-cgi"},l: list) : void -> script()]
+[option_usage(opt:{"-cgi"}) : tuple(string, string, string) ->
+	tuple("run as classic cgi",
+			"-cgi",
+			"run as classic cgi script")]
+
+ 
+
+[option_respond(self:{"-appConnTimeout"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] appConnTimeout,
+	l << 1)]
+
+[option_respond(self:{"-idle-timeout"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] idle-timeout,
+	l << 1)]
+
+[option_respond(self:{"-initial-env"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] initial-env,
+	l << 1)]
+
+
+[option_respond(self:{"-init-start-delay"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] init-start-delay,
+	l << 1)]
+
+[option_respond(self:{"-flush"},l: list) : void 
+-> (// if not(l) invalid_option_argument(),
+	//[0] flush,
+	// l << 1
+	none
+	)]
+
+
+[option_respond(self:{"-listen-queue-depth"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] init-start-delay,
+	l << 1)]
+[option_usage(opt:{"-listen-queue-depth"}) : tuple(string, string, string) ->
+	tuple("listen-queue-depth",
+			"-listen-queue-depth n (100)",
+			"The depth of listen() queue (also known as the backlog) shared by all of the instances of this application. A deeper listen queue allows the server to cope with transient load fluctuations without rejecting requests; it does not increase throughput. Adding additional application instances may increase throughput/performance, depending upon the application and the host.
+")]
+
+[option_respond(self:{"-min-server-life"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] min-server-life,
+	l << 1)]
+[option_usage(opt:{"-min-server-life"}) : tuple(string, string, string) ->
+	tuple("min-server-life",
+			"-min-server-life n (30)",
+			"The minimum number of seconds the application must run for before its restart interval is increased to 600 seconds. The server will get 3 tries to run for at least this number of seconds.
+")]
+
+
+[option_respond(self:{"-nph"},l: list) : void 
+-> (//[0] -nph
+	)]
+[option_usage(opt:{"-nph"}) : tuple(string, string, string) ->
+	tuple("nph",
+			"-nph",
+			"Instructs mod_fastcgi not to parse the headers. See the Apache documentation for more information about nph (non parse header) scripts.
+")]
+
+[option_respond(self:{"-pass-header"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] pass-header,
+	l << 1)]
+[option_usage(opt:{"-pass-header"}) : tuple(string, string, string) ->
+	tuple("pass-header",
+			"-pass-header header",
+			"The name of an HTTP Request Header to be passed in the request environment. This option makes available the contents of headers which are normally not available (e.g. Authorization) to a CGI environment.")]
+
+
+[option_respond(self:{"-port"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] port,
+	CGI_PORT := integer!(l[1]),
+	l << 1)]
+[option_usage(opt:{"-port"}) : tuple(string, string, string) ->
+	tuple("port",
+			"-port n",
+			"The TCP port number (1-65535) the application will use for communication with the web server. This option makes the application accessible from other machines on the network (as well as this one). The -socket and -port options are mutually exclusive.")]
+
+
+[option_respond(self:{"-priority"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] priority,
+	// CGI_PORT := integer!(l[1]),
+	l << 1)]
+[option_usage(opt:{"-priority"}) : tuple(string, string, string) ->
+	tuple("priority",
+			"-priority n",
+			"The process priority to be assigned to the application instances (using setpriority()).")]
+
+
+[option_respond(self:{"-processes"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] processes,
+	// CGI_PORT := integer!(l[1]),
+	l << 1)]
+[option_usage(opt:{"-processes"}) : tuple(string, string, string) ->
+	tuple("processes",
+			"-processes n (1)",
+			"The number of instances of the application to spawn at server initialization.")]
+
+[option_respond(self:{"-restart-delay"},l: list) : void 
+-> (if not(l) invalid_option_argument(),
+	//[0] processes,
+	// CGI_PORT := integer!(l[1]),
+	l << 1)]
+[option_usage(opt:{"-restart-delay"}) : tuple(string, string, string) ->
+	tuple("restart-delay",
+			"-restart-delay n (5 seconds)",
+			"The minimum number of seconds between the respawning of failed instances of this application. This delay prevents a broken application from soaking up too much of the system.
+")]
+

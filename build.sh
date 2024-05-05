@@ -9,6 +9,7 @@ CLMODULES=(
 	 "Regex"
 	 "Openssl"
 	 "Http"
+	 "FastCgi"
 	 "Wcl"
 	 "Pdf"
 	 # ------- 	ing Choco Tools ----
