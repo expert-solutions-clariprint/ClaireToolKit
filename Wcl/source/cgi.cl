@@ -675,3 +675,30 @@ script_loader(self:string) : void => none
 					(fclose(wcl.last_pair[1]),
 					add_child_report(wcl, wcl.last_pair[2])))))]
 
+
+
+[implode(s:list[string],sep:string) : string
+-> let f? := true,
+		str := ""
+	in (for x in s 
+			(if f? f? := false else str :/+ sep, 
+			str :/+ x),
+		str)]
+
+[fcgi_handler(p:FastCgi/record_port,datas:list) : void
+->	FastCgi/params_to_env(p),
+	let paths := explode(getenv("SCRIPT_NAME"),"/"),
+		script_names := list{p in paths | length(p) > 0 & not((length(p) = 26 & digit?(p[1])) | p[1] = '$')},
+		p_trans := getenv("DOCUMENT_ROOT") / implode(script_names,"/")
+	in (if (isdir?(p_trans)) p_trans :/ "index.wcl",
+		setenv("PATH_TRANSLATED=" /+ p_trans)),
+	wcl_main(p.FastCgi/cgi_stdin, p)]
+
+
+[option_usage(opt:{"-wcl-fastcgi"}) : tuple(string, string, string) ->
+	tuple("Wcl handler",
+			"-wcl-fastcgi",
+			"add the Wcl handler to fastcgi stack")]
+
+[option_respond(opt:{"-wcl-fastcgi"}, l:list) : void -> 
+	FastCgi/add_handler(fcgi_handler,list(),10)]

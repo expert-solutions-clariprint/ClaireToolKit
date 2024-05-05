@@ -4,10 +4,11 @@
 
 (use_module("Sys"))
 (use_module("Http"))
+(use_module("FastCgi"))
 
 
 Wcl :: module(
-	uses = list(Sys, Http, Reader),
+	uses = list(Sys, Http,FastCgi, Reader),
 	made_of = list("cgi.cl", "trace.cl", "error.cl", "session.cl"),
 	source = "source",
 	version = "v1.0.0") // put your version here
