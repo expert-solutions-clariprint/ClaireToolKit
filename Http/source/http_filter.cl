@@ -506,3 +506,8 @@ explode_url(fullurl:string) : tuple(boolean, string, integer, string)
 									", Http module " /+ Http.version),
 		header(http, "Host: " /+ s /+ ":" /+ string!(p)),
 		http)]
+
+
+[set_auth(http:http_handler, login:string, passwd:string)
+-> header(http, "Authorization: Basic " /+ encode64(login /+ ":" /+ passwd))]
+
