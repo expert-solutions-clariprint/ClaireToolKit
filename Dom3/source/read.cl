@@ -43,7 +43,7 @@
 -> //[3] domDeclarationHandler(~S,~S) // _x,attrs,
 	if (attrs["version"] != "") _x.xmlVersion := attrs["version"],
 	if (attrs["encoding"] != "") (
-		_x.xmlEncoding := attrs["encoding"]),
+		_x.xmlEncoding := upper(attrs["encoding"])),
 	_x]
 
 [private/setupSax() : Sax/sax_parser
