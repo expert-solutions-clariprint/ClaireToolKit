@@ -91,7 +91,7 @@ build()
 			then
 	#		claire -color -s 4 4 -v 2 -cpp -g -os 3 -D -cls -ov ${CLAIRE_PUBLISH_OPTION} -publish;
 	#		claire -color -s 4 4 -v 2  -cpp -O3 -os 5 -cls -ov ${CLAIRE_PUBLISH_OPTION} -publish;
-				claire -color -s 6 0  -v 2  -os 3  -cls -ov ${CLAIRE_PUBLISH_OPTION} -publish
+				claire -color -s 9 0  -v 2  -os 3  -cls -ov ${CLAIRE_PUBLISH_OPTION} -publish
 			fi
 			cd ..;
 		fi
