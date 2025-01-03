@@ -75,10 +75,14 @@ htmlformData! :: property()
 [htmlBoolean!(s:string) : boolean
 -> not(s % list("0","false","-1"))]
 
+
 [claire/htmlfloat!(s:string) : float -> s := replace(s," ",""), s := replace(s,",","."), float!(s)]
 [claire/htmlfloat!(s:integer) : float -> float!(s)]
+[claire/htmlfloat!(s:float) : float -> s]
 
-[claire/htmlinteger!(s:float) : integer -> integer!(s)]
+[round!(f:float) : integer -> externC("round(f)",integer)]
+
+[claire/htmlinteger!(s:float) : integer -> round!(s)]
 [claire/htmlinteger!(s:string) : integer -> s := replace(s," ",""), integer!(s)]
 [claire/htmlinteger!(s:integer) : integer -> s]
 
@@ -117,16 +121,24 @@ htmlformData! :: property()
 	"),
 	result))]
 
+
+
+[formValue(self:property,formData:table) : (integer U float U string U boolean) ->
+	formData[string!(self.name)]]
+
+(open(formValue) := 3)
+
+
 [htmlFormParse(self:object,formData:table) : object
 ->	for s in { @(p,owner(self)) | p  in Dbo/dbPropertiesButId(self) }
 		(   //[2] parseForm(~S) : slot ~S   range : ~S   value = ~S // self,s,range(s),formData[string!(s.selector.name)],
 			case (s.range)
 			(	{ string  }
 					(if (formData[string!(s.selector.name)] % string)
-						write(s.selector,self,xssFilter(formData[string!(s.selector.name)],s.selector))),
+						write(s.selector,self,xssFilter(formValue(s.selector,formData),s.selector))),
 				{  integer  }
 					(if (formData[string!(s.selector.name)])
-						write(s.selector,self,htmlinteger!(formData[string!(s.selector.name)]))),
+						write(s.selector,self,htmlinteger!(formValue(s.selector,formData)))),
 				{  float }
 					(if (formData[string!(s.selector.name)]) (
 						if (known?(Dbo/dbSqlType,s.selector) & s.selector.Dbo/dbSqlType % Db/SQL_DATE_TYPE)
@@ -136,9 +148,9 @@ htmlformData! :: property()
 								{Db/SQL_TIME} 
 									write(s.selector,self,make_time(formData[string!(s.selector.name)])),
 								any
-									write(s.selector,self, htmlfloat!(formData[string!(s.selector.name)])))
+									write(s.selector,self, htmlfloat!(formValue(s.selector,formData))))
 						else
-							write(s.selector,self,htmlfloat!(formData[string!(s.selector.name)])))),
+							write(s.selector,self,htmlfloat!(formValue(s.selector,formData))))),
 				{  boolean }
 					(if (formData[string!(s.selector.name)])
 						write(s.selector,self,htmlBoolean!(formData[string!(s.selector.name)]))),
@@ -147,6 +159,7 @@ htmlformData! :: property()
 						when i := htmlformData!(s.selector,formData)
 						in	write(s.selector,self,i)
 						else erase(s.selector,self) )
-				)),
+				),
+			none),
 	self]
 
