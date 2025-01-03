@@ -81,3 +81,5 @@ Zlib/include/clZlib.h
 */Linux-x86_64-g++7/*
 WclSite/csrc/*
 /Wcl/cgi/.libs
+/Pdf/csrc
+/Dbo/csrc
