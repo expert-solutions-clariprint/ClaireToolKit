@@ -35,6 +35,14 @@ retain("test_keep_me", "hoho", 3),
 sleep(4000),
 //[0] data stored : ~S // get("test_keep_me"),
 
+let t := now()
+in (
+	//[0] lock : ~S // lock!("test_keep_me"),
+
+	//[0] lock2,
+	//[0] lock2 ... : ~S  after ~Ams // lock!("test_keep_me"), elapsed(t),
+	none),
+
 
 //[0] disconnect,
 

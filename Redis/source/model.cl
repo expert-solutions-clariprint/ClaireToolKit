@@ -1,3 +1,28 @@
+/**
+ * Copyright (c) 2025, expert-solutions sarl
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation and/or
+ * other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ * may be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ */
+
+
+
 
 RETAIN_TIME:float := 60.0
 
@@ -212,4 +237,33 @@ write_port(self:redis_string_filter, buf:char*, len:integer) : integer ->
 [auth(login:string,pass:string) : any -> auth(DEFAULT_SERVER,login,pass)]
 
 
+LOCK_TIMEOUT_S:integer :=  60
+LOCK_RETRY_MS:integer := 100
+
+
+[lock(self:redis_client, key:string) : boolean
+-> let oldp := use_as_output(self.iosock)
+	in (printf("SET ~A ~S NX EX ~A\r\n", key, getpid(),LOCK_TIMEOUT_S),
+		use_as_output(oldp),
+		parse(self) = "OK")]
+
+[unlock(self:redis_client, key:string) : boolean
+-> let oldp := use_as_output(self.iosock)
+	in (printf("DEL ~A \r\n", key),
+		use_as_output(oldp),
+		parse(self) = "OK")]
+
+
+[lock(key:string) : boolean -> lock(DEFAULT_SERVER, key)]
+[unlock(key:string) : boolean -> unlock(DEFAULT_SERVER, key)]
+
+[lock!(self:redis_client, key:string, retry_ms:integer) : boolean
+->	while not(lock(self,key)) sleep(retry_ms),
+	true]
+
+[lock!(self:redis_client, key:string) : boolean -> lock!(DEFAULT_SERVER, key, LOCK_RETRY_MS)]
+
+[lock!(key:string) : boolean -> lock!(DEFAULT_SERVER, key, LOCK_RETRY_MS)]
+
+[lock!(key:string,retry_ms:integer) : boolean -> lock!(DEFAULT_SERVER, key, retry_ms)]
 

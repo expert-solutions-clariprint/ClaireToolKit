@@ -76,6 +76,20 @@
 
 claire/$SESSION[vname:string] : any := false
 
+
+session_storage <: ephemeral_object()
+
+[session_save(self:session_storage,session_id:string, data:any) : boolean -> false]
+[session_exists?(self:session_storage,session_id:string) : boolean -> false]
+
+session_default_file_storage <: session_storage()
+
+[session_exists?(self:session_default_file_storage,session_id:string) : boolean -> isfile?(session_file())]
+
+
+
+
+
 [claire/session_file() : string => getenv("WCL_SESSION_PATH") / getenv("WCL_SESSION_NAME") /+ "-" /+ getenv("WCL_SESSION") /+ ".session"]
 
 [claire/session_exists?() : boolean -> isfile?(session_file())]
