@@ -25,7 +25,8 @@
  *
  * 4. The names "Apache" and "Apache Software Foundation" must
  *    not be used to endorse or promote products derived from this
- *    software without prior written permission. For written
+ *    software wit
+ hout prior written permission. For written
  *    permission, please contact apache@apache.org.
  *
  * 5. Products derived from this software may not be called "Apache",
@@ -484,7 +485,7 @@ static apr_status_t misconfigured(request_rec *r, char *casperwcl, char *msg) {
 
 static apr_status_t mod_wcl_error(request_rec *r, char *casperwcl, const char *fmt, va_list args) {
 	char *msg = apr_pvsprintf(r->pool, fmt, args);
-	ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, msg);
+	// ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, msg);
 	ap_set_content_type(r, "text/html");
 	ap_rprintf(r, "<h1>Internal Server Error (%s)</h1>", casperwcl);
 	ap_rputs("<p style='white-space: pre'>", r);

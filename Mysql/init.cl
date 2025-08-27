@@ -14,7 +14,7 @@ Mysql :: module(
 	version = "v1.0.0",
 	part_of = Db,
 	uses = list(Db),
-	made_of = list("model", (if (sys_name() = "Darwin") "<mysql/mysql.h>" else "<mysql/mysql.h>")),
+	made_of = list("model", (if (sys_name() = "Darwin") "<mysql/mysql.h>" else "<mariadb/mysql.h>")),
 	source = "source")
 
 (begin(Db))

@@ -7,8 +7,10 @@ WIN32_CONTRIB :: (realpath(getenv("_")) /- "" /- "" /- "" /- "contrib")
 // ==== external libraries needed at link time ====
 (if (compiler.env = "ntv")
 	compiler.libraries :add 
-		WIN32_CONTRIB / "lib" / "libeay32.lib" /+ " " /+
-		WIN32_CONTRIB / "lib" / "ssleay32.lib advapi32.lib"
+//		WIN32_CONTRIB / "lib" / "libeay32.lib" /+ " " /+
+//		WIN32_CONTRIB / "lib" / "ssleay32.lib advapi32.lib"
+		WIN32_CONTRIB / "lib" / "libssl.lib libcrypto.lib"
+
 else
 	compiler.libraries :add " -L/opt/local/lib -lssl -lssl -lcrypto")
 
@@ -21,6 +23,7 @@ else
 Openssl :: module(
 	uses = list(Core),
 	made_of = list(
+		"../csrc/ssl_callbacks.cpp",
 		"common.cl",
 		"key.cl",
 		"x509.cl",

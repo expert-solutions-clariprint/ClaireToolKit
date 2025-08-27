@@ -54,6 +54,7 @@ openssl_error <: exception(errs:list[string])
 			l :add end_of_string()),
 		openssl_error(errs = l))]
 
+
 [openssl_error!(err:string) : void =>
 	openssl_error(errs = list(err))]
 

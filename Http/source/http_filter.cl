@@ -504,7 +504,8 @@ explode_url(fullurl:string) : tuple(boolean, string, integer, string)
 		http.http_status_out := "POST " /+ f /+ " HTTP/1.1",
 		header(http, "User-Agent: CLAIRE v" /+ release() /+
 									", Http module " /+ Http.version),
-		header(http, "Host: " /+ s /+ ":" /+ string!(p)),
+//		header(http, "Host: " /+ s /+ ":" /+ string!(p)),
+		header(http, "Host: " /+ s),
 		http)]
 
 

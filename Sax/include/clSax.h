@@ -75,13 +75,13 @@ public:
   global_variable * DEFAULT_FILE_CHARSET;
   global_variable * DEBUG_WILDCARD;
 property * xml_read_upto;// Sax/"xml_read_upto"
+property * build_larg2;// Sax/"build_larg2"
 property * debug_xml_handler;// Sax/"debug_xml_handler"
 property * parse_one_attr;// Sax/"parse_one_attr"
 property * nsmap;// Sax/"nsmap"
 property * currentns;// Sax/"currentns"
 property * build_larg4;// Sax/"build_larg4"
 property * build_larg3;// Sax/"build_larg3"
-property * build_larg2;// Sax/"build_larg2"
 property * build_larg1;// Sax/"build_larg1"
 property * xml_handler;// Sax/"xml_handler"
 property * doctype_handler;// Sax/"doctype_handler"
