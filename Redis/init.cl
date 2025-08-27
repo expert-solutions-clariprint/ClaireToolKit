@@ -1,21 +1,18 @@
 
-// init file for module Wcl
-// created Sun Oct  2 13:06:36 2005 by claire v3.3.35
-
-(use_module("Sys"))
-(use_module("Http"))
-(use_module("Redis"))
+// init file for module Redis
+// created Thu Mar 27 15:58:23 2025 by claire v3.7.8
 
 
-Wcl :: module(
-	uses = list(Sys, Http, Reader, Redis),
-	made_of = list("cgi.cl", "trace.cl", "error.cl", "session.cl"),
+
+Redis :: module(
+	uses = list(Core),
+	made_of = list("model.cl"),
 	source = "source",
 	version = "v1.0.0") // put your version here
 
 
-(load(Wcl))
-
+(load(Redis))
+(begin(Redis))
 
 // Here you can customize the C++ compiler.
 // You can uncomment and set any of the following option :

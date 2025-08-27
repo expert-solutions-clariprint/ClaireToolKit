@@ -1,20 +1,17 @@
 
-// init file for module Wcl
-// created Sun Oct  2 13:06:36 2005 by claire v3.3.35
-
-(use_module("Sys"))
-(use_module("Http"))
-(use_module("Redis"))
+// init file for module Scache
+// created Sun Mar 23 22:12:02 2025 by claire v3.7.8
 
 
-Wcl :: module(
-	uses = list(Sys, Http, Reader, Redis),
-	made_of = list("cgi.cl", "trace.cl", "error.cl", "session.cl"),
+
+Scache :: module(
+	uses = list(Core),
+	made_of = list("model.cl"),
 	source = "source",
 	version = "v1.0.0") // put your version here
 
 
-(load(Wcl))
+(load(Scache))
 
 
 // Here you can customize the C++ compiler.
