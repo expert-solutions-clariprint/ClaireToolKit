@@ -546,6 +546,8 @@ script_loader(self:string) : void => none
 // words local errors are supported which is kind for HTML dev in the sense
 // that element completions have a chance to occur.
 [claire/load_wcl(self:string) : void ->
+	ctx_store(),
+
 	Reader/reader_push(),
 	write(Reader/index, reader, 1),
 	write(Reader/maxstack, reader, 1),
@@ -594,6 +596,7 @@ script_loader(self:string) : void => none
 		shrink(wcl.file_stack, len),
 		mClaire/set_base(start),
 		mClaire/set_index(top),
+		ctx_pop(),
 		//[-100] <<<<<< Script ~A loaded <<<<<< // self,
 		fclose(f))]
 
@@ -607,7 +610,9 @@ script_loader(self:string) : void => none
 	try
 		when candidate := look_for_compiled_handler(self)
 		in (//[-100] >>>>>> Load compiled script ~A >>>>>> // self,
+			ctx_store(),
 			apply(candidate, list(self)),
+			ctx_pop(),
 			//[-100] <<<<<< Compiled script ~A loaded <<<<<< // self
 			)
 		else load_wcl(self)
@@ -674,4 +679,20 @@ script_loader(self:string) : void => none
 				if isenv?("WCL_DEBUG")
 					(fclose(wcl.last_pair[1]),
 					add_child_report(wcl, wcl.last_pair[2])))))]
+
+
+/* data context helper */
+ctx_stack:list[list] := list<list>()
+
+ctx_data:table := make_table(string,any,unknown)
+ctx(key:string,val:any) : any -> (ctx_data[key] := val, val)
+ctx(key:string) : any -> ctx_data[key]
+
+[ctx_store() : void -> ctx_stack :add copy(ctx_data.mClaire/graph)]
+
+[ctx_pop() : void 
+-> if (length(ctx_stack) > 0) (
+	erase(mClaire/graph,ctx_data),
+	write(mClaire/graph,ctx_data,ctx_stack[length(ctx_stack)]),
+	shrink(ctx_stack, length(ctx_stack) - 1))]
 
