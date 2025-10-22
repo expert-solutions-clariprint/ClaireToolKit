@@ -161,6 +161,9 @@ private/dummy_next <: object() */
 						else error("??")))),
 		res)]
 
+
+[encode(self:{unknown}) : boolean -> princ("null"),true]
+
 [encode(self:string) : boolean -> printf("~S",self),true]
 
 [encode(self:tuple) : boolean -> encode(list!(self))]
