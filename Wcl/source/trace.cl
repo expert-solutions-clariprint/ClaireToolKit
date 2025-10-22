@@ -65,7 +65,7 @@ write_port(self:trace_indenter, buf:char*, len:integer) : integer ->
 			else
 				(//<sb> open the file used for trace
 				if isenv?("WCL_USE_SYSLOG")
-					self.trace_file := Sys/syslog!(getenv("WCL_USE_SYSLOG"))
+					Sys/use_syslog()
 				else if not(isenv?("WCL_DEBUG"))
 					self.trace_file :=
 						close_target!(line_buffer!(

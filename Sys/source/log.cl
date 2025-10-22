@@ -34,12 +34,13 @@ SYSLOG_INFORMATIONAL :: 6 //	Informational	info	Pour information.
 SYSLOG_DEBUGGING :: 7 // Debugging	debug	Message de mise au point.
 
 syslogport <: device(
-		logname:string = "claire",
+		logname:string = "",
 		option:integer = 0,
 		facility:integer = SYSLOG_USER,
 		level:integer = SYSLOG_NOTICE,
 		isopen?:boolean = false )
 
+[use_syslog() : void -> let p := syslogport() in ctrace() := line_buffer!(p)]
 
 [eof_port?(self:syslogport) : boolean -> true]
 
