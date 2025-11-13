@@ -104,7 +104,7 @@ private/dummy_next <: object() */
 */
 [table!() : table -> make_table(string,JSON_DATATYPE,unknown)]
 
-// STACK:list := nil
+// STACK:list := nil "
 
 [decode(p:port) : JSON_DATATYPE
 ->	let escape?:boolean := false,
@@ -131,7 +131,7 @@ private/dummy_next <: object() */
 						{'}',']'} (deep :- 1, UNSTACK),
 						{','} KEY,
 						{'$', ':' } KEY,
-						any (unget(p,x[2]), read_number(p))))
+						any (unget(p,x[2]), read_number(p)))) // "
 			in (//[2] -----------------------------------------------------------------------,
 				//[2] val : ~S x = ~S  deep: ~S stack:~S// val,x,deep,length(stack),
 				// print_stack(stack),
@@ -161,6 +161,11 @@ private/dummy_next <: object() */
 						else error("??")))),
 		res)]
 
+ENCODE_OBJ:list := list<any>()
+MAX_DEPTH:integer := 30
+CUR_DEPTH:integer := 0
+
+[initCircularGruard() : void -> shrink(ENCODE_OBJ,0), CUR_DEPTH := 0]
 
 [encode(self:{unknown}) : boolean -> princ("null"),true]
 
@@ -176,28 +181,47 @@ private/dummy_next <: object() */
 [encode(self:boolean) : boolean -> if self princ("true") else princ("false"), true]
 
 
-[encode(self:table) : void -> 
+[encode(self:table) : boolean -> 
+	if not(self % ENCODE_OBJ | CUR_DEPTH > MAX_DEPTH)
 	printf("{~I}",
-		(let _graph := self.mClaire/graph,
+		(ENCODE_OBJ :add self,
+		let _graph := self.mClaire/graph,
 			first? := true
-		in	for i in (1 .. (length(_graph) / 2))
+		in	(for i in (1 .. (length(_graph) / 2))
 				let key := _graph[2 * i - 1],
 					_value := _graph[2 * i]
-				in	(if known?(_value)
+				in	(CUR_DEPTH :+ 1,
+					if known?(_value)
 						(if first? first? := false else printf(","),
-						printf("~S:~I",key,encode(_value))))))]
+						printf("~S:~I",key,encode(_value))),
+					CUR_DEPTH :- 1
+				))
+		)
+	) else princ("null"),
+	true]
+
 //					else printf("~S:null"))))]
 
 [encode(self:list) : boolean -> 
-	printf("[~I]",(let first?  := true
-					in (for i in self
-							(if first? first? := false else printf(","),
-							encode(i))))),
+	if not( CUR_DEPTH > MAX_DEPTH) // /* self % ENCODE_OBJ */
+	printf("[~I]",(
+		// ENCODE_OBJ :add self,
+		let first?  := true
+		in (for i in self (
+				if first? first? := false else printf(","),
+				CUR_DEPTH :+ 1,
+				encode(i),
+				CUR_DEPTH :- 1
+			)
+		)
+	))
+	else princ("null"),
 	true]
 
 [encode(self:JSON_DATATYPE,p:port) : port ->
 	let oldp := use_as_output(p)
-	in (encode(self),use_as_output(oldp),p)]
+	in (initCircularGruard(),
+		encode(self),use_as_output(oldp),p)]
 
 [encode(self:JSON_DATATYPE,filename:string,mode:string) : void ->
 	fclose(encode(self,fopen(filename,mode)))]
