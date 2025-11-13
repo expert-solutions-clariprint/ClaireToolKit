@@ -4,6 +4,7 @@ CLMODULES=(
 #------- Building System Tools ----"
 	"Zlib"
 	"Sys"
+	"Redis"
 	"Md5"
 	"Iconv"
 	 "Regex"
