@@ -162,7 +162,7 @@ private/dummy_next <: object() */
 		res)]
 
 ENCODE_OBJ:list := list<any>()
-MAX_DEPTH:integer := 30
+MAX_DEPTH:integer := 40
 CUR_DEPTH:integer := 0
 
 [initCircularGruard() : void -> shrink(ENCODE_OBJ,0), CUR_DEPTH := 0]
@@ -182,7 +182,7 @@ CUR_DEPTH:integer := 0
 
 
 [encode(self:table) : boolean -> 
-	if not(self % ENCODE_OBJ | CUR_DEPTH > MAX_DEPTH)
+	if not(CUR_DEPTH > MAX_DEPTH) // self % ENCODE_OBJ
 	printf("{~I}",
 		(ENCODE_OBJ :add self,
 		let _graph := self.mClaire/graph,
