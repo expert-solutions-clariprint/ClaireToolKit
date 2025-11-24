@@ -338,7 +338,8 @@ ensure_http_headers_sent(self:http_handler) : void ->
 // * part 4: httd_filter from input port                                     *
 // ***************************************************************************
 
-[parse_input(self:http_handler) : port ->
+//
+[parse_input(self:http_handler, raiseError:boolean) : port ->
 	//[-100] == Parse HTTP headers on ~S // self,
 	let head := freadline(self.low_input),
 		lhead := lower(head),
@@ -354,9 +355,11 @@ ensure_http_headers_sent(self:http_handler) : void ->
 				(//<sb> skip info header
 				if not(match_wildcard?(lhead, "http/1.? 1?? continue"))
 					first? := false,
+				self.http_status_in := lhead,
 				//<sb> expect a success header (2xx family)
-				if not(match_wildcard?(lhead, "http/1.? 2?? *"))
-					error("http_parse_headers(~S) read an error status [~A]", self, head)),
+				if (not(match_wildcard?(lhead, "http/1.? 2?? *")) & raiseError)
+					error("http_parse_headers(~S) read an error status [~A]", self, head)					
+				),
 			//[-100] ~A // head,
 			if (find(lhead, "content-encoding: ") = 1 & (find(lhead, "gzip") > 0 | find(lhead, "deflate") > 0))
 				compress? := true
@@ -377,6 +380,8 @@ ensure_http_headers_sent(self:http_handler) : void ->
 			self.input := buffer!(Zlib/gziper!(self.input), 4096),
 		self.input)]
 
+//
+[parse_input(self:http_handler) : port -> parse_input(self,true)]
 
 
 // ***************************************************************************
