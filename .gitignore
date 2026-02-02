@@ -87,3 +87,4 @@ WclSite/csrc/*
 /Redis/csrc
 /Harbor/include
 /Zlib/include
+/Casper/csrc
