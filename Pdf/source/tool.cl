@@ -90,6 +90,7 @@
 			else princ(c))]
 
 [filter_pdf_string(self:string) : void ->
+	//[-10] filter_pdf_string(~S) // self,
 	for i in (1 .. length(self))
 		let c := self[i]
 		in (//if (i mod 80 = 0) princ("\\\n"), //<sb> sanity line break (ignored at load time)
@@ -98,6 +99,83 @@
 			//else if (c = '\0') princ("\\000")
 			else if (c = '\n') princ("\\n")
 			else princ(self, i, i))]
+
+[filter_pdf_text(self:string) : void ->
+	//[-10] filter_pdf_text(~S) // self,
+	// Detect presence of non-ascii bytes (assume UTF-8 if any > 127)
+	let has_non_ascii? := false,
+		all_byte? := true
+	in (for k in (1 .. length(self))
+			let b := integer!(self[k])
+			in (if (b > 127) has_non_ascii? := true),
+	//[0] has_non_ascii? ~S // has_non_ascii?,
+	if (not(has_non_ascii?))
+		(printf("(~I)",filter_pdf_string(self)))
+	else (
+		// decode UTF-8 bytes to Unicode code points, decide representation
+		let cps := list<integer>(),
+			len := length(self), i := 1
+		in ((while (i <= len)
+			let b := integer!(self[i])
+			in (//[0] b = ~S // b,
+				if (b <= 127)
+				(	(cps add b), i :+ 1)
+				else if (b >= 192 & b <= 223)
+					(if (i + 1 <= len)
+						(let b2 := integer!(self[i + 1]),
+							code := (b - 192) * 64 + (b2 - 128)
+						 in (cps add code,
+						 	if (code > 255)
+								all_byte? := false, i :+ 2))
+					else (cps add 63, all_byte? := false, i :+ 1))
+				else if (b >= 224 & b <= 239)
+					(if (i + 2 <= len)
+						(let b2 := integer!(self[i + 1]), b3 := integer!(self[i + 2]),
+							code := (b - 224) * 4096 + (b2 - 128) * 64 + (b3 - 128)
+						 in (cps add code, all_byte? := false, i :+ 3))
+						else (cps add 63, all_byte? := false, i :+ 1))
+				else if (b >= 240 & b <= 247)
+					(if (i + 3 <= len)
+						(let b2 := integer!(self[i + 1]), b3 := integer!(self[i + 2]), b4 := integer!(self[i + 3]),
+							cp := (b - 240) * 262144 + (b2 - 128) * 4096 + (b3 - 128) * 64 + (b4 - 128)
+						 in (cps add cp, all_byte? := false, i :+ 4))
+						else (cps add 63, all_byte? := false, i :+ 1))
+					else (cps add 63, all_byte? := false, i :+ 1))),
+		// if all codepoints fit in one byte, emit a parenthesized literal
+		//[0] all_byte? ~S // all_byte?,
+		if (all_byte?)
+			(let s := (print_in_string(), for c in cps princ(char!(c)), end_of_string())
+			in (printf("("), filter_pdf_string(s), printf(")")))
+		else
+			(// otherwise emit UTF-16BE hex with BOM
+			princ("<FEFF"),
+			for c in cps
+				(if (c <= 65535)
+					(let h := hex!(c),
+						 h4 := (if (length(h) > 4) 
+						 	substring(h, length(h) - 3, length(h))
+						 	else (let padlen := 4 - length(h),
+						 		  pad := make_string(padlen, '0')
+						 		in pad /+ h))
+					 in printf("~A", h4))
+				else
+					(let cpprime := c - 65536,
+					 hi := 55296 + integer!(cpprime / 1024),
+					 lo := 56320 + integer!(cpprime % 1024),
+					 hhi := hex!(hi), hlo := hex!(lo),
+					 h4hi := (if (length(hhi) > 4)
+					 	substring(hhi, length(hhi) - 3, length(hhi))
+					 	else (let padlen := 4 - length(hhi),
+					 		  pad := make_string(padlen, '0')
+					 		in pad /+ hhi)),
+					 h4lo := (if (length(hlo) > 4)
+					 	substring(hlo, length(hlo) - 3, length(hlo))
+					 	else (let padlen := 4 - length(hlo),
+					 		  pad := make_string(padlen, '0')
+					 		in pad /+ hlo))
+					in (printf("~A", h4hi),
+					 printf("~A", h4lo)))),
+			princ(">")))))]
 
 [unfilter_pdf_string(self:string) : string ->
 	print_in_string(),

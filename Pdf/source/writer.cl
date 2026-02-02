@@ -58,7 +58,7 @@ self_float(f:float) : void ->
 		old := cout(),
 		out := before_sig,
 		pos := 16
-	in (fwrite("%PDF-1.4\n%âãÏÓ\n", out),
+	in (fwrite("%PDF-1.4\n%ï¿½ï¿½ï¿½ï¿½\n", out),
 		for o in sort(object_less? @ pdf_object, self.objects)
 			case o
 				(pdf_signature_field
@@ -195,8 +195,8 @@ self_float(f:float) : void ->
 	printf("\n~S 0 obj\n<</Type/Font", self.id),
 	printf("/Subtype/Type1/Name/F~S", self.fontnum),
 	printf("/BaseFont/~A", self.font.FontName),
-	if (lower(self.font.CharacterSet) != "special")
-		printf("/Encoding/WinAnsiEncoding"),
+	// Use WinAnsiEncoding for better Unicode character support
+	princ("/Encoding/WinAnsiEncoding"),
 	princ(">>\nendobj")]
 
 
@@ -503,7 +503,7 @@ self_float(f:float) : void ->
 					self_float(ca), self_float(self.x),
 					self_float(self.y))]
 
-[self_pdf(self:pdf_show_text) : void -> printf("(~I) Tj", filter_pdf_string(self.text))]
+[self_pdf(self:pdf_show_text) : void -> (filter_pdf_text(self.text), printf(" Tj"))]
 [self_pdf(self:pdf_new_text_line) : void -> printf("~I TL T*", self_float(self.TL))]
 [self_pdf(self:pdf_end_text) : void -> printf("ET")]
 
@@ -900,29 +900,31 @@ self_float(f:float) : void ->
 	if (w.hparent % html_inline_element)
 		draw_background(w, w.X, w.Y + w.ascender, w.width, w.height),
 	draw_underline(w, w.X, w.Y, w.width),
-	printf("~I BT 1 0 0 1~I~I Tm~I (~I ) Tj ET",
-			printf("~I rg", self_pdf_color(css_get(w, css_color))),
-			self_float(w.X),
-			self_float(w.Y),
-			printf(" /F~S~I Tf~I Tw",
-						css_get_font(w),
-						self_float(css_scaled_get(w, css_font-size)),
-						self_float(w.scale * w.word_spacing)),
-			filter_pdf_string(w.word)),
+	printf("~I BT 1 0 0 1~I~I Tm~I ",
+		printf("~I rg", self_pdf_color(css_get(w, css_color))),
+		self_float(w.X),
+		self_float(w.Y),
+		printf(" /F~S~I Tf~I Tw",
+				css_get_font(w),
+				self_float(css_scaled_get(w, css_font-size)),
+				self_float(w.scale * w.word_spacing))),
+	filter_pdf_text(w.word),
+	printf(" Tj ET"),
 	if (w.hparent % html_inline_element)
 		draw_borders(w, w.X, w.Y + w.ascender, w.width, w.height)]
 
 [self_pdf_lazy(prev:any, w:html_lazy_element) : void ->
 	draw_background(w, w.X, w.Y + w.ascender, w.width, w.height),
 	draw_underline(w, w.X, w.Y, w.width),
-	printf("~I BT 1 0 0 1~I~I Tm~I (~I ) Tj ET",
-			printf("~I rg", self_pdf_color(css_get(w, css_color))),
-			self_float(w.X),
-			self_float(w.Y),
-			printf(" /F~S~I Tf",
-						css_get_font(w),
-						self_float(css_scaled_get(w, css_font-size))),
-			filter_pdf_string(w.index)),
+	printf("~I BT 1 0 0 1~I~I Tm~I ",
+		printf("~I rg", self_pdf_color(css_get(w, css_color))),
+		self_float(w.X),
+		self_float(w.Y),
+		printf(" /F~S~I Tf",
+				css_get_font(w),
+				self_float(css_scaled_get(w, css_font-size)))),
+	filter_pdf_text(w.index),
+	printf(" Tj ET"),
 	draw_borders(w, w.X, w.Y + w.ascender, w.width, w.height)]
 
 [self_pdf_placed_word(prev:any, self:html_placed_word) : void ->

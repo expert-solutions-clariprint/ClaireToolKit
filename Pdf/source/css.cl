@@ -266,6 +266,10 @@ PRINTED_LOCATION:any := unknown
 		self.specificity := s,
 		self)]
 
+pop :: 'P'
+popo :: "popopo"
+
+
 
 
 
