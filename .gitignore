@@ -88,3 +88,4 @@ WclSite/csrc/*
 /Harbor/include
 /Zlib/include
 /Casper/csrc
+/Redis/include
