@@ -44,6 +44,10 @@ CLMODULES=(
 	 "WclSite"
 	 "Postal"
 	 "WebLocale"
+
+	"Habor"
+	"Pier"
+
 	 # ------- 	ing legacy Tools ----"
 	 # "tk2xl"
 
