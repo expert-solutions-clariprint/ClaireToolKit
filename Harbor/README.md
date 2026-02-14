@@ -12,6 +12,13 @@ Usage
 To handle REST APIs, define (or override) the `Harbor/api` function. The
 framework calls it for every incoming request.
 
+To use the embedded HTTP server, start the Harbor binary with the
+`-serve` option.
+
+Other options:
+- `-listen-port <port>` to change the listen port.
+- `-listen-socket <path>` to use a UNIX socket.
+
 Signature
 ---------
 `Harbor/api(request, method, path elments, ...)`
