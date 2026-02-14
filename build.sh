@@ -45,7 +45,7 @@ CLMODULES=(
 	 "Postal"
 	 "WebLocale"
 
-	"Habor"
+	"Harbor"
 	"Pier"
 
 	 # ------- 	ing legacy Tools ----"
