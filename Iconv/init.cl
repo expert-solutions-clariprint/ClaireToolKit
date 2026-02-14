@@ -18,7 +18,7 @@ Iconv :: module(
 
 // ==== external libraries needed at link time ====
 (if (find(compiler.env,"Darwin") > 0) (
-	(compiler.libraries :add " -liconv")))
+	(compiler.libraries :add " -liconv -I/opt/local/include -L/opt/local/lib")))
 
 // ==== C++ compiler options ====
 ;(compiler.options[1] :/+ "-a_cpp_option") // Optimize mode (-O)
