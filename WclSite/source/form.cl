@@ -30,7 +30,7 @@
 
 [htmlFormSelectUnknown(inputName:string,l:list,selected:any) : void 
 ->	printf("<select name=~S>", inputName),
-	printf("<option value=''>~A</option>",translate("indéfini")),
+	printf("<option value=''>~A</option>",translate("indÃ©fini")),
 	for o in l
 	(when i := Dbo/getDbId(o) in
 		printf("<option value='~S' ~A >~A</option>\n",

@@ -54,12 +54,12 @@
 [echo(self:WebMenu) : void -> princ(url(self))]
 
 
-// revoie le fichier associé au menu qui est associé à la classe
+// revoie le fichier associï¿½ au menu qui est associï¿½ ï¿½ la classe
 [getFileClass(c:class) : string 
 -> when m := some(mm in WebMenu | known?(menuClass,mm) & c <= mm.menuClass) in m.menuFile 
 	else ""]
 
-// renvoie l emenu associé à une classe
+// renvoie l emenu associï¿½ ï¿½ une classe
 [getMenuClass(c:class) : (WebMenu U {unknown})
 -> some(mm in WebMenu | known?(menuClass,mm) & c <= mm.menuClass)]
 
@@ -212,7 +212,7 @@ WCL_DRAW_MENU_USER_INFO:boolean := true
 	CURRENT_MENU := self,
 	none ]
 
-// compatibilité
+// compatibilitï¿½
 private/MENU_INIT_DONE?:boolean := false
 
 
@@ -397,7 +397,7 @@ private/BASE_HTML_HEADERS:list[string] := list<string>()
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html class="<?= htmlCss(self) ?> <?= string!(name(self)) ?>">
 <head>
-	<meta http-equiv="content-type" content="text/html; <?= translate("charset=iso-8859-1") ?>" />
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<title><?= WclSite/topapp().WclSite/siteFullName   ?><? (if $["WINDOW TITLE"] echo($["WINDOW TITLE"])) ?></title>
 	<? ,
 	for  h in html_headers() printf("~A\n",h),
