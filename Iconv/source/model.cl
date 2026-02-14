@@ -99,11 +99,16 @@ iconv_error <: exception(code:integer,info:string = "unknwon error")
 [iconv_translit(s:string, _tocode:ENCODINGS, _fromcode:ENCODINGS) : string -> _iconv(s, _tocode, _fromcode, "//TRANSLIT")]
 [iconv_ignore(s:string, _tocode:ENCODINGS, _fromcode:ENCODINGS) : string -> _iconv(s, _tocode, _fromcode, "//IGNORE")]
 
-
 UTF8_BASE_ESCAPE_CHAR:string :=  string!(char!(195))
 
 // fast utf8? check only standard latin1 
 [utf8?(self:string) : boolean -> (find(self,UTF8_BASE_ESCAPE_CHAR) > 0)]
+
+[utf8_valid?(self:string) : boolean ->
+	let l := length(self)
+	in (externC("(utf8::is_valid(self, self + l) ? CTRUE : CFALSE)",boolean))]
+
+[ensure_utf8(self:string) : string -> if utf8_valid?(self) self else utf8!(self,"ISO-8859-15")]
 
 [_utf8?(self:string) : boolean ->
 let l := length(self)
