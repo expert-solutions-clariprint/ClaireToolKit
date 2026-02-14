@@ -24,3 +24,8 @@ HTTP_METHODS :: {"get","post","put","delete","patch","copy","head"}  // supporte
 // The well known ping pong API
 [api(req:Http/http_handler, http_method:string, path:{"ping"}) : void
 -> echo("pong")]
+
+// @doc API
+// The well known ping pong API
+[api(req:Http/http_handler, http_method:{"post"}, path:{"ping"}) : void
+-> echo("pong post")]
