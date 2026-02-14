@@ -6,6 +6,8 @@
 value! :: property()
 (abstract(value!))
 
+ENSURE_UTF8_ONLOAD:boolean := true
+
 [value!(db:Db/Database, p:dbProperty, obj:object, self:port) : any -> 
 	if (range(@(p, owner(obj))) =type? list[string])
 		extract_string_list(self)
@@ -28,8 +30,9 @@ value! :: property()
 	getObjectFromId(db, rg, integer!(self))]
 
 [value!(db:Db/Database, self:string, rg:{string}) : string -> 
-	//[DBTOOLS_VALUE] value!(string = ~S, rg = ~S) // self, rg,
-	self]
+	//[-100] value!(string = ~S, rg = ~S) // self, rg,
+	if (ENSURE_UTF8_ONLOAD) Iconv/ensure_utf8(self) else self]
+
 [value!(db:Db/Database, self:string, rg:{char}) : char -> 
 	//[DBTOOLS_VALUE] value!(string = ~S, rg = ~S) // self, rg,
 	self[1]]
