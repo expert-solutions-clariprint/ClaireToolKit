@@ -83,3 +83,9 @@ WclSite/csrc/*
 /Wcl/cgi/.libs
 /Pdf/csrc
 /Dbo/csrc
+/Harbor/csrc
+/Redis/csrc
+/Harbor/include
+/Zlib/include
+/Casper/csrc
+/Redis/include

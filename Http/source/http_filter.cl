@@ -101,6 +101,13 @@ http_handler <: device(
 				//<sb> low level input and output (e.g socket, stdout ...),
 				low_input:port,
 				low_output:port,
+				
+				//<xp> to be used for server mode.
+				is_server?:boolean = false,
+				http_method:string = "",	// filled by parse_input if is_server?
+				http_url:string = "",
+				http_version:string = "HTTP/1.1",
+
 				//<sb> redirected input and output (e.g gziper, buffer ...)
 				input:port,
 				output:port,
@@ -112,6 +119,7 @@ http_handler <: device(
 				content-length?:boolean = false,
 				force-content-type-html?:boolean = false,
 				output_gizped?:boolean = false,
+
 				is_client?:boolean = false)
 	
 
@@ -286,6 +294,28 @@ ensure_http_headers_sent(self:http_handler) : void ->
 		//[-100] == force_content_length(~S), output is ~S // self, cout(),
 		self.content-length? := true)]
 
+[send_http_response(self:http_handler,status:integer) : void ->
+	self.http_status_out := "HTTP/1.1 " /+ string!(status) /+ " " /+ Http/status_message(status)]
+
+[status_message(self:integer) : string
+->  case self
+		({200} "OK",
+		{201} "Created",
+		{202} "Accepted",
+		{204} "No Content",
+		{301} "Moved Permanently",
+		{302} "Found",
+		{304} "Not Modified",
+		{400} "Bad Request",
+		{401} "Unauthorized",
+		{403} "Forbidden",
+		{404} "Not Found",
+		{500} "Internal Server Error",
+		{501} "Not Implemented",
+		{502} "Bad Gateway",
+		{503} "Service Unavailable",
+		any "Unknown Status")]
+
 
 // ***************************************************************************
 // * part 3: httd_filter from CGI env                                        *
@@ -351,16 +381,28 @@ ensure_http_headers_sent(self:http_handler) : void ->
 		out := self
 	in (while (length(head) > 0)
 			(heads :add head,
+			//[-100] header : ~A // head,
 			if first?
 				(//<sb> skip info header
-				if not(match_wildcard?(lhead, "http/1.? 1?? continue"))
-					first? := false,
 				self.http_status_in := lhead,
-				//<sb> expect a success header (2xx family)
-				if (not(match_wildcard?(lhead, "http/1.? 2?? *")) & raiseError)
-					error("http_parse_headers(~S) read an error status [~A]", self, head)					
-				),
-			//[-100] ~A // head,
+				if (self.is_server?) (
+					let status_line := explode(lhead, " ")
+					in (if (length(status_line) < 3)
+							error("http_parse_headers(~S) read a malformed status line [~A]", self, head),
+						self.http_method := upper(status_line[1]),
+						self.http_url := status_line[2],
+						self.http_version := status_line[3],
+						self.http_status_out := "HTTP/1.1 200 OK",
+						//[-100] HTTP Method: ~A, URL: ~A, Version: ~A // self.http_method, self.http_url, self.http_version,
+						first? := false))
+				else (
+					//[-100] first header : ~A // lhead,
+					if not(match_wildcard?(lhead, "http/1.? 1?? continue"))
+						first? := false,
+					//<sb> expect a success header (2xx family)
+					if (not(match_wildcard?(lhead, "http/1.? 2?? *")) & raiseError)
+						error("http_parse_headers(~S) read an error status [~A]", self, head)					
+					)),
 			if (find(lhead, "content-encoding: ") = 1 & (find(lhead, "gzip") > 0 | find(lhead, "deflate") > 0))
 				compress? := true
 			else if (find(lhead, "transfer-encoding: ") = 1 & find(lhead, "chunked") > 0)
