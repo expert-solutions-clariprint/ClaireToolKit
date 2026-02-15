@@ -72,6 +72,7 @@ option_respond(self:{"-listen-socket"}, l:list) : void ->
                             paths := explode(url,"/") 
                         in (paths := paths << 1,
                             for p in paths  api_params :add p,
+                            Http/header(hdl, "Content-Type: application/json"),
                             //[0] call the API with the parameters ~S // api_params,
                             try apply(api,api_params)
                             catch any

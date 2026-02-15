@@ -4,11 +4,13 @@
 
 (use_module("Harbor"))
 (use_module("Dbo"))
+(use_module("Mysql"))
+(use_module("Json"))
 
 
 Pier :: module(
-	uses = list(Harbor, Dbo),
-	made_of = list("api.cl"),
+	uses = list(Harbor, Dbo, Mysql, Json),
+	made_of = list("api.cl","print.cl"),
 	source = "source",
 	version = "v1.0.0") // put your version here
 
