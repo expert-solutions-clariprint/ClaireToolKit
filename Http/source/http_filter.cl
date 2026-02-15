@@ -386,7 +386,7 @@ ensure_http_headers_sent(self:http_handler) : void ->
 				(//<sb> skip info header
 				self.http_status_in := lhead,
 				if (self.is_server?) (
-					let status_line := explode(lhead, " ")
+					let status_line := explode(head, " ")
 					in (if (length(status_line) < 3)
 							error("http_parse_headers(~S) read a malformed status line [~A]", self, head),
 						self.http_method := upper(status_line[1]),
