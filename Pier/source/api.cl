@@ -1,4 +1,3 @@
-
 // @cat Usage
 // Pier is a simple REST API framework for Claire. 
 // It expose the classes of your application as REST resources,
@@ -131,7 +130,7 @@ tools
 // Update the identified object
 // require a JSON body with the object data
 [Harbor/api(req:Http/http_handler, http_method:{"post"}, app:{"pier"}, version:string, module_name:string, class_name:string, obj_id:string) : void
--> when json := Json/decode(Http/input(req))
+-> when json := Json/decode((let p := port!() in (freadwrite(Http/input(req),p),p)))
     in (when cls := get_class(module_name, class_name)
         in (when obj := Dbo/dbLoad(DB,cls, obj_id)
             in ( // here you can customize the object update with the data from the request body
