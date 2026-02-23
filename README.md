@@ -115,6 +115,9 @@ claire -os 3 -cls -publish
 - **Sys**  
   System-level helpers (filesystem, processes, environment, OS utilities).
 
+- **Dotenv**  
+  Read .env style file
+
 - **Dns**  
   DNS querying/lookup utilities.
 
