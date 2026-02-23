@@ -6,9 +6,23 @@
 ## Usage
 
 ### With command line
+
+load .env in current working directory
 ```bash
 claire -dotenv
 ```
+
+load myfile as a .env file
+```bash
+claire -file-env myfile
+```
+
+You can use it multiple times
+
+```bash
+claire -file-env /etc/project.evn -file-env local.env  -dotenv
+```
+
 
 ### by code
 
