@@ -31,6 +31,7 @@ Openssl :: module(
 		"pkcs8.cl",
 		"pkcs12.cl",
 		"ssl.cl",
+		"aes.cl",
 		"<openssl/asn1.h>",
 		"<openssl/rand.h>",
 		"<openssl/ssl.h>",
@@ -39,7 +40,8 @@ Openssl :: module(
 		"<openssl/err.h>",
 		"<openssl/x509v3.h>",
 		"<openssl/x509_vfy.h>",
-		"<openssl/evp.h>",
+		"<openssl/evp.h>",		
+		"<openssl/aes.h>",
 		"<openssl/pkcs12.h>"),
 	source = "source",
 	version = "v1.0.0") // put your version here

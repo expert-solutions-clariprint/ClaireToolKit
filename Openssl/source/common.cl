@@ -47,9 +47,14 @@ openssl_error <: exception(errs:list[string])
 		externC("SSL_load_error_strings()"),
 		while (externC("((code = ERR_get_error()) != 0)", integer) = 1)
 			(print_in_string(),
+			externC("
+				char buff[256];
+				int bufflen;
+				ERR_error_string_n(code, buff, 256);
+				buff[bufflen] = '\\0';"),
 			printf("[~A]:[~A]:[~A]",
 				externC("(char*)(ERR_lib_error_string(code)?ERR_lib_error_string(code):\"unknown\")", string),
-				externC("(char*)(ERR_func_error_string(code)?ERR_func_error_string(code):\"unknown\")", string),
+				externC("(char*)&buff", string),
 				externC("(char*)(ERR_reason_error_string(code)?ERR_reason_error_string(code):\"unknown\")", string)),
 			l :add end_of_string()),
 		openssl_error(errs = l))]
