@@ -11,7 +11,7 @@ connect(),
 
 //[0] test values,
 for v in list("a string", 12, 12.4, true, false,"\"quoted\"","line1\nline2","line1\r\nline2","json:3",LONG_TEXT) (
-	//[0] retain(~S) ... ~S  => ~S // v , retain("test_value", v),get("test_value"),
+		retain("test_value", v),get("test_value"),
 
 	none),
 
