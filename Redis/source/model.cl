@@ -48,6 +48,8 @@ DEFAULT_SERVER:redis_client := unknown
 // connect to the default redis server
 [connect() : boolean -> 
 	DEFAULT_SERVER := redis_client(),
+	if (isenv?("REDIS_SERVER_HOST")) DEFAULT_SERVER.tcp_host := getenv("REDIS_SERVER_HOST"),
+	if (isenv?("REDIS_SERVER_PORT")) DEFAULT_SERVER.tcp_port := integer!(getenv("REDIS_SERVER_PORT")),
 	connect(DEFAULT_SERVER)]
 
 // @doc
@@ -256,7 +258,7 @@ redis_write(self:redis_client, p:port) : void ->
 // @doc
 // delete a value from the default redis server
 [forgot(key:string) : any
--> remove(DEFAULT_SERVER, key)]
+-> forgot(DEFAULT_SERVER, key)]
 
 
 // @doc
@@ -270,7 +272,7 @@ redis_write(self:redis_client, p:port) : void ->
 // @doc
 // delete multiple values from the default redis server
 [forgot(keys:list[string]) : any
--> remove(DEFAULT_SERVER, keys)]
+-> forgot(DEFAULT_SERVER, keys)]
 
 
 // @doc
@@ -335,3 +337,30 @@ LOCK_RETRY_MS:integer := 100
 // a simple lock implementation
 [lock!(key:string,retry_ms:integer) : boolean -> lock!(DEFAULT_SERVER, key, retry_ms)]
 
+
+
+// @doc
+// command line options usage to connect to a redis server
+[option_usage(opt:{"-redis", "-redis-connect"}) : tuple(string, string, string) ->
+	tuple("Redis client",
+			"{-redis | -redis-connect <host:port>}",
+			"Start a redis client on the specified host and port.")]
+
+
+// @doc
+// command line options to connect to a redis server with custom host and port
+[option_respond(opt:{"-redis-connect"}, l:list[string]) : void
+->	if not(l) invalid_option_argument(),
+	let f := l[1],
+		parts := split(f, ":")
+	in (if (length(parts) != 2) invalid_option_argument(),
+		setenv("REDIS_SERVER_HOST=" /+ parts[0]),
+		setenv("REDIS_SERVER_PORT=" /+ parts[1]),
+		connect())]
+
+
+// @doc
+// command line options to connect to a redis server with default host and port
+// use env variables REDIS_SERVER_HOST and REDIS_SERVER_PORT to specify custom host and port
+[option_respond(opt:{"-redis"}, l:list[string]) : void
+-> connect()]
