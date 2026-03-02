@@ -50,7 +50,11 @@ DEFAULT_SERVER:redis_client := unknown
 	DEFAULT_SERVER := redis_client(),
 	if (isenv?("REDIS_SERVER_HOST")) DEFAULT_SERVER.tcp_host := getenv("REDIS_SERVER_HOST"),
 	if (isenv?("REDIS_SERVER_PORT")) DEFAULT_SERVER.tcp_port := integer!(getenv("REDIS_SERVER_PORT")),
-	connect(DEFAULT_SERVER)]
+	if (connect(DEFAULT_SERVER))
+		(if (isenv?("REDIS_SERVER_LOGIN") & isenv?("REDIS_SERVER_PASSWORD"))
+			(auth(getenv("REDIS_SERVER_LOGIN"),
+				getenv("REDIS_SERVER_PASSWORD")) = "OK"))
+	else false]
 
 // @doc
 // disconnect from the default redis server
@@ -347,15 +351,17 @@ LOCK_RETRY_MS:integer := 100
 			"Start a redis client on the specified host and port.")]
 
 
+
 // @doc
 // command line options to connect to a redis server with custom host and port
 [option_respond(opt:{"-redis-connect"}, l:list[string]) : void
 ->	if not(l) invalid_option_argument(),
 	let f := l[1],
-		parts := split(f, ":")
+		parts := explode(f, ":")
 	in (if (length(parts) != 2) invalid_option_argument(),
-		setenv("REDIS_SERVER_HOST=" /+ parts[0]),
-		setenv("REDIS_SERVER_PORT=" /+ parts[1]),
+		l << 1,
+		setenv("REDIS_SERVER_HOST=" /+ parts[1]),
+		setenv("REDIS_SERVER_PORT=" /+ parts[2]),
 		connect())]
 
 
@@ -364,3 +370,18 @@ LOCK_RETRY_MS:integer := 100
 // use env variables REDIS_SERVER_HOST and REDIS_SERVER_PORT to specify custom host and port
 [option_respond(opt:{"-redis"}, l:list[string]) : void
 -> connect()]
+
+
+// @doc
+// command line options usage to set redis authentication
+[option_usage(opt:{"-redis-auth <login> <password>"}) : tuple(string, string, string) ->
+	tuple("Redis client",
+			"{-redis-auth <login:> <password>}",
+			"Start a redis authentication with login and password. (require -redis or -redis-connect berfore)")]
+
+[option_respond(opt:{"-redis-auth"}, l:list[string]) : void
+-> if (length(l) < 2) invalid_option_argument(),
+   let login := l[1],
+       password := l[2]
+   in (auth(login, password),
+   		l << 2)]
