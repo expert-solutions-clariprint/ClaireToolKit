@@ -27,7 +27,27 @@ in (serialize(p,val),
 		v2 := unserialize(r)
 	in (//[0] ... ~S : ~S // val, v2,
 		none)),
-	
+
+//[0] ******* TEST LARGE FILE *******,
+let p := port!(),
+	max_size := 1024 * 1024, // 1024, // 1MB
+	f := fopen("tests/01.json", "r")
+in (// retain("TEST_FILE",f),
+	for i in (1 .. max_size) putc('x', p),
+	//[-100] == write a large file to test the handling of large files in the REDIS server,
+	retain("LARGE_FILE",p),
+
+	let n := get("LARGE_FILE")
+	in (//[-100] Large file size: ~S // length(n),
+		if (length(n) = max_size)
+			printf("Large file test passed.\n")
+		else
+			printf("!!!!!!!!! Large file test failed.\n"),
+		none)),
+
+
+
+
 //[0] TEST timeout,
 retain("test_keep_me", "hoho", 3),
 //[0] data stored : ~S // get("test_keep_me"),
