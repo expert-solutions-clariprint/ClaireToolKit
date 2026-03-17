@@ -59,9 +59,34 @@ private/dummy_next <: object() */
 
 [private/read_string(p:port) : string
 ->	let res := ""
-	in (while (let x := freadline(p,{'"',"\\u"})
-				in (// //[0] x = ~S // x,
-					if (x[2] = "\\u")
+	in (while (let x := freadline(p,{'"',"\\u","\\n","\\\"","\\r","\\t","\\\\"})
+				in (//[0] x = ~S // x,
+					if (x[2] = "\\n")
+						(//[0] x[1] = ~S // x[1],
+							res :/+ x[1],
+							res :/+ "\n",
+							true)						
+					else if (x[2] = "\\\"")
+						(//[0] x[1] = ~S // x[1],
+							res :/+ x[1],
+							res :/+ "\"",
+							true)						
+					else if (x[2] = "\\\\")
+						(//[0] x[1] = ~S // x[1],
+							res :/+ x[1],
+							res :/+ "\\",
+							true)						
+					else if (x[2] = "\\r")
+						(//[0] x[1] = ~S // x[1],
+							res :/+ x[1],
+							res :/+ "\r",
+							true)						
+					else if (x[2] = "\\t")
+						(//[0] x[1] = ~S // x[1],
+							res :/+ x[1],
+							res :/+ "\t",
+							true)						
+					else if (x[2] = "\\u")
 						let u := (/* fread(p,1), */ ""),
 							str := "",
 							v1 := fread(p,2),
